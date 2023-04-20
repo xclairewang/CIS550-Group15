@@ -3,6 +3,10 @@ const cors = require('cors');
 const config = require('./config');
 const routes = require('./routes');
 
+/******************
+ * IN USE *
+ ******************/
+
 const app = express();
 app.use(cors({
   origin: '*',
