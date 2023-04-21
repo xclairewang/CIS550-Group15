@@ -9,16 +9,13 @@ import {
   TextField,
   Typography
 } from "@mui/material";
-import {useState} from "react";
 
 
-export default function LoginPage(props) {
-  // const [email, setEmail] = useState('')
-  // TODO: create usestate for all fields, check inputs, connect to db
-  const handleSignIn = (event) => {
+export default function RegisterPage(props) {
+  // TODO: add necessary fields to register
+  const handleRegister = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    props.onLoggedIn('dummyUser')
     console.log({
       email: data.get('email'),
       password: data.get('password'),
@@ -39,9 +36,9 @@ export default function LoginPage(props) {
             {/*<LockOutlinedIcon />*/}
           </Avatar>
           <Typography component="h1" variant="h5">
-            Sign in
+            Register
           </Typography>
-          <Box component="form" onSubmit={handleSignIn} noValidate sx={{ mt: 1 }}>
+          <Box component="form" onSubmit={handleRegister} noValidate sx={{ mt: 1 }}>
             <TextField
               margin="normal"
               required
@@ -72,7 +69,7 @@ export default function LoginPage(props) {
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
             >
-              Sign In
+              Submit
             </Button>
             <Grid container>
               {/*<Grid item xs>*/}
@@ -81,8 +78,8 @@ export default function LoginPage(props) {
               {/*  </Link>*/}
               {/*</Grid>*/}
               <Grid item>
-                <Link variant="body2" onClick={() => props.onFormSwitch('register')}>
-                  {"Don't have an account? Sign Up"}
+                <Link variant="body2" onClick={() => props.onFormSwitch('login')}>
+                  {"Already have an account? Sign in"}
                 </Link>
               </Grid>
             </Grid>

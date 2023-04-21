@@ -9,7 +9,7 @@ import Button from '@mui/material/Button';
 export default function MovieCard({title, year, link, rating}) {
   return(
     <Container>
-      <Card sx={{ maxWidth: 300 }}>
+      <Card sx={{ width: 250 }}>
         <CardMedia
           sx={{ height: 350}}
           image= "https://www.omdbapi.com/src/poster.jpg"
@@ -18,16 +18,16 @@ export default function MovieCard({title, year, link, rating}) {
           <Typography gutterBottom variant="h6" component="div">
             ${title}
           </Typography>
-          <Typography variant="h7" color="text.secondary" display="inline" >
+          <Typography variant="h7" color="text.secondary">
             ${year}
           </Typography>
-          <Typography variant="h7" align="right" display="inline">
+          <Typography variant="h7" align="right">
             ${rating}
           </Typography>
 
         </CardContent>
         <CardActions>
-          <Button size="small" href='${link}'>Link to IMDB</Button>
+          <Button size="small" href='${link}'>Link</Button>
           <Button size="small">Rate</Button>
         </CardActions>
       </Card>

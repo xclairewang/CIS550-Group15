@@ -139,7 +139,7 @@ export default function HomePage() {
             </Button>
         </Grid>
       </Grid>
-      <Grid container alignItems="center" spacing={3} sx={{ mx:'auto' }}>
+      <Grid container alignItems="center" justifyContent="center" spacing={3} sx={{ mx:'auto', mt:5 }}>
         <Grid item>
           <MovieCard></MovieCard>
         </Grid>

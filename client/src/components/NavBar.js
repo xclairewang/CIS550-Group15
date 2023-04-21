@@ -2,49 +2,76 @@ import { AppBar, Container, Toolbar, Typography } from '@mui/material'
 import { NavLink } from 'react-router-dom';
 import "@fontsource/poppins";
 
-// The hyperlinks in the NavBar contain a lot of repeated formatting code so a
-// helper component NavText local to the file is defined to prevent repeated code.
-const NavText = ({ href, text, isMain }) => {
-  return (
-    <Typography
-      variant={isMain ? 'h5' : 'h7'}
-      noWrap
-      style={{
-        marginRight: '30px',
-        fontFamily: 'poppins',
-        fontWeight: 700,
-        letterSpacing: '.1rem',
-      }}
-    >
-      <NavLink
-        to={href}
-        style={{
-          color: 'inherit',
-          textDecoration: 'none',
-        }}
-      >
-        {text}
-      </NavLink>
-    </Typography>
-  )
-}
-
-// Here, we define the NavBar. Note that we heavily leverage MUI components
-// to make the component look nice. Feel free to try changing the formatting
-// props to how it changes the look of the component.
-export default function NavBar() {
-  return (
+// TODO: add logo, change profile tab to picture and make drop downs
+export default function NavBar({loggedIn}) {
+  if (loggedIn) {
+    return (
+      <AppBar position='static'>
+        <Container maxWidth="xl" >
+          <Toolbar disableGutters sx={{justifyContent: 'flex-end'}}>
+            <Typography variant='h5' noWrap style={{
+              fontWeight: 700,
+              letterSpacing: '.1rem',
+            }}>
+              <NavLink
+                to='/'
+                style={{
+                  color: 'inherit',
+                  textDecoration: 'none',
+                }}
+              >
+                Moowie
+              </NavLink>
+            </Typography>
+            <Typography variant='v7' noWrap style={{
+              marginLeft: '19%',
+              fontWeight: 700,
+              letterSpacing: '.1rem',
+            }}>
+              <NavLink
+                to='/socials'
+                style={{
+                  color: 'inherit',
+                  textDecoration: 'none',
+                }}
+              >
+                Socials
+              </NavLink>
+            </Typography>
+            <Typography variant='v7' noWrap style={{
+              marginLeft: '18%',
+              fontWeight: 700,
+              letterSpacing: '.1rem',
+            }}>
+              <NavLink
+                to='/profile'
+                style={{
+                  color: 'inherit',
+                  textDecoration: 'none',
+                }}
+              >
+                Profile
+              </NavLink>
+            </Typography>
+          </Toolbar>
+        </Container>
+      </AppBar>
+    );
+  } else {
+    return (
     <AppBar position='static'>
-      <Container maxWidth='xl'>
-        <Toolbar disableGutters>
-          <NavText href='/' text='Moowie' isMain />
-          <NavText href='/trending' text='Trending' />
-          <NavText href='/social' text='Socials' />
-          <NavText href='/profile' text='Profile' />
-          {/*<NavText href='/albums' text='ALBUMS' />*/}
-          {/*<NavText href='/songs' text='SONGS' />*/}
+      <Container maxWidth="xl" >
+        <Toolbar disableGutters sx={{justifyContent: 'center'}}>
+          <Typography variant='h5' noWrap style={{
+            fontWeight: 700,
+            letterSpacing: '.1rem',
+          }}>
+            Moowie
+          </Typography>
         </Toolbar>
       </Container>
     </AppBar>
   );
+  }
+
 }
