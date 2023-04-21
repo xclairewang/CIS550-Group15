@@ -15,246 +15,152 @@ const connection = mysql.createConnection({
 connection.connect((err) => err && console.log(err));
 
 
-// Route 1: GET /author/:type
-const author = async function(req, res) {
-  // (TASK 1): replace the values of name and pennKey with your own
-  const name = 'Claire Wang';
-  const pennKey = 'cw75';
-
-  // checks the value of type the request parameters
-  // note that parameters are required and are specified in server.js in the endpoint by a colon (e.g. /author/:type)
-  if (req.params.type === 'name') {
-    // res.send returns data back to the requester via an HTTP response
-    res.send(`Created by ${name}`);
-  } else if (req.params.type === 'pennkey') {
-    // (TASK 2): edit the else if condition to check if the request parameter is 'pennkey' and if so, send back response 'Created by [pennkey]'
-    res.send(`Created by ${pennKey}`);
-  } else {
-    // we can also send back an HTTP status code to indicate an improper request
-    res.status(400).send(`'${req.params.type}' is not a valid author type. Valid types are 'name' and 'pennkey'.`);
-  }
-}
-
-// Route 2: GET /random
-const random = async function(req, res) {
-  // you can use a ternary operator to check the value of request query values
-  // which can be particularly useful for setting the default value of queries
-  // note if users do not provide a value for the query it will be undefined, which is falsey
-  const explicit = req.query.explicit === 'true' ? 1 : 0;
-
-  // Here is a complete example of how to query the database in JavaScript.
-  // Only a small change (unrelated to querying) is required for TASK 3 in this route.
-  connection.query(`
-    SELECT *
-    FROM Songs
-    WHERE explicit <= ${explicit}
-    ORDER BY RAND()
-    LIMIT 1
-  `, (err, data) => {
+// Route 1: GET /trending/:user_id
+const trending = async function(req, res) {
+  const user_id = req.params.user_id
+  
+  connection.query (
+    `SELECT M.id, M.imdb_link, M.title, M.imdb_rating, M.year, (
+      CASE WHEN EXISTS (
+      SELECT rating
+          FROM MovieRatings R
+          WHERE R.username = '${req.params.user_id}'
+      ) THEN 1 ELSE 0 END
+      ) AS watched, GROUP_CONCAT(G.genre, '') AS genres
+      FROM Movies M 
+      JOIN MovieGenres G ON M.id = G.movie_id
+      GROUP BY M.id, M.imdb_link, M.title, M.imdb_rating, M.year, watched
+      ORDER BY M.imdb_rating DESC
+      LIMIT 50`
+  , (err, data) => {
     if (err || data.length === 0) {
       // if there is an error for some reason, or if the query is empty (this should not be possible)
       // print the error message and return an empty object instead
       console.log(err);
       res.json({});
     } else {
-      // Here, we return results of the query as an object, keeping only relevant data
-      // being song_id and title which you will add. In this case, there is only one song
-      // so we just directly access the first element of the query results array (data)
-      // (TASK 3): also return the song title in the response
-      res.json({
-        song_id: data[0].song_id,
-        title: data[0].title
-      });
+      res.json(data);
     }
-  });
+  }); 
 }
 
-/********************************
- * BASIC SONG/ALBUM INFO ROUTES *
- ********************************/
-
-// Route 3: GET /song/:song_id
-const song = async function(req, res) {
-  // (TASK 4): implement a route that given a song_id, returns all information about the song
-  // Most of the code is already written for you, you just need to fill in the query
-  connection.query(`
-    SELECT *
-    FROM Songs
-    WHERE song_id = '${req.params.song_id}'
-  `, (err, data) => {
+// Route 2: GET /register_rate
+const register_rate = async function(req, res) {
+  const page = req.query.page;
+  const pageSize = req.query.page_size ?? 10;
+  
+  connection.query (
+    `WITH CombGenres AS (
+      SELECT G.movie_id, CONCAT(G.genre, ';') AS genres
+      FROM MovieGenres G
+      GROUP BY G.movie_id
+    ) 
+    SELECT M.id, M.imdb_link, M.title, M.imdb_rating, M.year, COUNT(username) AS num_ratings
+    FROM MovieRatings R 
+    JOIN Movies M ON M.id = R.movie_id 
+    JOIN CombGenres C ON C.movie_id = R.movie_id
+    GROUP BY M.id
+    ORDER BY num_ratings` 
+    
+    //add back offset once connected with frontend
+    //LIMIT ${pageSize} OFFSET ${(page-1) * pageSize}
+  , (err, data) => {
     if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data[0]);
-    }
-  });
-}
-
-// Route 4: GET /album/:album_id
-const album = async function(req, res) {
-  // (TASK 5): implement a route that given a album_id, returns all information about the album
-  connection.query(`
-    SELECT *
-    FROM Albums
-    WHERE album_id = '${req.params.album_id}'
-  `, (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data[0]);
-    }
-  });
-}
-
-// Route 5: GET /albums
-const albums = async function(req, res) {
-  // (TASK 6): implement a route that returns all albums ordered by release date (descending)
-  // Note that in this case you will need to return multiple albums, so you will need to return an array of objects
-  connection.query(`
-    SELECT *
-    FROM Albums
-    ORDER BY release_date DESC
-  `, (err, data) => {
-    if (err || data.length === 0) {
+      // if there is an error for some reason, or if the query is empty (this should not be possible)
+      // print the error message and return an empty object instead
       console.log(err);
       res.json({});
     } else {
       res.json(data);
     }
-  });
+  }); 
 }
 
-// Route 6: GET /album_songs/:album_id
-const album_songs = async function(req, res) {
-  // (TASK 7): implement a route that given an album_id, returns all songs on that album ordered by track number (ascending)
-  connection.query(`
-    SELECT song_id, title, number, duration, plays
-    FROM Songs
-    WHERE album_id = '${req.params.album_id}'
-    ORDER BY number
-  `, (err, data) => {
-    if (err || data.length === 0) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(data);
-    }
-  });
-}
-
-/************************
- * ADVANCED INFO ROUTES *
- ************************/
-
-// Route 7: GET /top_songs
-const top_songs = async function(req, res) {
-  const page = req.query.page;
-  // (TASK 8): use the ternary (or nullish) operator to set the pageSize based on the query or default to 10
-  const pageSize = req.query.page_size ?? 10;
-
-  if (!page) {
-    // (TASK 9): query the database and return all songs ordered by number of plays (descending)
-    // Hint: you will need to use a JOIN to get the album title as well
-    connection.query(`
-      SELECT s.song_id, s.title, s.album_id, a.title AS album, s.plays
-      FROM Songs s JOIN Albums a ON s.album_id = a.album_id
-      ORDER BY plays DESC
-    `, (err, data) => {
-      if (err || data.length === 0) {
-        console.log(err);
-        res.json({});
-      } else {
-        res.json(data);
-      }
-    });
-  } else {
-    // (TASK 10): reimplement TASK 9 with pagination
-    // Hint: use LIMIT and OFFSET (see https://www.w3schools.com/php/php_mysql_select_limit.asp)
-    connection.query(`
-      SELECT s.song_id, s.title, s.album_id, a.title AS album, s.plays
-      FROM Songs s JOIN Albums a ON s.album_id = a.album_id
-      ORDER BY plays DESC
-      LIMIT ${pageSize} OFFSET ${(page-1) * pageSize}
-    `, (err, data) => {
-      if (err || data.length === 0) {
-        console.log(err);
-        res.json({});
-      } else {
-        res.json(data);
-      }
-    });
-  }
-}
-
-// Route 8: GET /top_albums
-const top_albums = async function(req, res) {
-  // (TASK 11): return the top albums ordered by aggregate number of plays of all songs on the album (descending), with optional pagination (as in route 7)
-  // Hint: you will need to use a JOIN and aggregation to get the total plays of songs in an album
-  const page = req.query.page;
-  const pageSize = req.query.page_size ?? 10;
-  if (!page) {
-    connection.query(`
-      SELECT a.album_id, a.title, SUM(s.plays) AS plays
-      FROM Songs s JOIN Albums a ON s.album_id = a.album_id
-      GROUP BY a.album_id
-      ORDER BY plays DESC
-    `, (err, data) => {
-      if (err || data.length === 0) {
-        console.log(err);
-        res.json({});
-      } else {
-        res.json(data);
-      }
-    });
-  } else {
-    connection.query(`
-      SELECT a.album_id, a.title, SUM(s.plays) AS plays
-      FROM Songs s JOIN Albums a ON s.album_id = a.album_id
-      GROUP BY a.album_id
-      ORDER BY plays DESC
-      LIMIT ${pageSize} OFFSET ${(page-1) * pageSize}
-    `, (err, data) => {
-      if (err || data.length === 0) {
-        console.log(err);
-        res.json({});
-      } else {
-        res.json(data);
-      }
-    });
-  }
-}
-
-// Route 9: GET /search_albums
-const search_songs = async function(req, res) {
-  // (TASK 12): return all songs that match the given search query with parameters defaulted to those specified in API spec ordered by title (ascending)
-  // Some default parameters have been provided for you, but you will need to fill in the rest
+// Route 3: GET /search
+const search = async function(req, res) {
   const title = req.query.title ?? '%';
-  const durationLow = req.query.duration_low ?? 60;
-  const durationHigh = req.query.duration_high ?? 660;
-  const playsLow = req.query.plays_low ?? 0;
-  const playsHigh = req.query.plays_high ?? 1100000000;
-  const danceLow = req.query.danceability_low ?? 0;
-  const danceHigh = req.query.danceability_high ?? 1;
-  const energyLow = req.query.energy_low ?? 0;
-  const energyHigh = req.query.energy_high ?? 1;
-  const valenceLow = req.query.valence_low ?? 0;
-  const valenceHigh = req.query.valence_high ?? 1;
-  const explicit = req.query.explicit === 'true' ? 1 : 0;
+  const genre = req.query.genre ?? '%';
+  const yearLow = req.query.year_low ?? 0;
+  const yearHigh = req.query.year_high ?? 2200;
+
+  connection.query (
+    `WITH AllMovies AS (
+      SELECT id, imdb_link, title, imdb_rating, year,  GROUP_CONCAT(genre, '') AS genres
+      FROM Movies M JOIN MovieGenres G ON M.id = G.movie_id
+      GROUP BY id
+    )
+    SELECT id, imdb_link, title, imdb_rating, year, genres
+    FROM AllMovies A
+    WHERE LOWER(title) LIKE '%.strtolower(${title}).%' AND genres LIKE '${genre}' AND year <= '${yearHigh}' AND year >= '${yearLow}' ` 
+    
+    //add back offset once connected with frontend
+    //LIMIT ${pageSize} OFFSET ${(page-1) * pageSize}
+  , (err, data) => {
+    if (err || data.length === 0) {
+      // if there is an error for some reason, or if the query is empty (this should not be possible)
+      // print the error message and return an empty object instead
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+    }
+  }); 
+
+}
+
+// Route 4: GET /login
+//not tested yet
+const login = async function(req, res) {
+  const username = req.params.username;
+  const password = req.params.password;
+  
+  connection.query (
+    `SELECT U.username, U.password
+    FROM Users U
+    WHERE username = '${username}' AND password = '${password}' `, (err, data) => {
+      if (err || data.length === 0) {
+        // if there is an error for some reason, or if the query is empty (this should not be possible)
+        // print the error message and return an empty object instead
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    }    
+  )
+}
+
+// Route 5: GET /update/:user_id
+const update = async function(req, res) {
+  const page = req.query.page;
+  const pageSize = req.query.page_size ?? 10;
+
+  connection.query(
+    `SELECT R.username, M.title, R.rating, M.imdb_link, R.comment
+    FROM Following F
+    JOIN MovieRatings R ON F.following = R.username
+    JOIN Movies M on R.movie_id = M.id
+    WHERE F.user = '${req.params.user_id}'
+    ORDER BY timestamp DESC
+    LIMIT ${pageSize} `, (err, data) => {
+      if (err || data.length === 0) {
+        // if there is an error for some reason, or if the query is empty (this should not be possible)
+        // print the error message and return an empty object instead
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      } 
+    });
+}
 
 
+// Route 6: GET /follower/:user_id
+const follower = async function(req, res) {
   connection.query(`
-    SELECT *
-    FROM Songs
-    WHERE title LIKE '%${title}%' AND explicit <= ${explicit}
-    AND duration >= ${durationLow} AND duration <= ${durationHigh}
-    AND plays >= ${playsLow} AND plays <= ${playsHigh}
-    AND danceability >= ${danceLow} AND danceability <= ${danceHigh}
-    AND energy >= ${energyLow} AND energy <= ${energyHigh}
-    AND valence >= ${valenceLow} AND valence <= ${valenceHigh}
-    ORDER BY title
-  `, (err, data) => {
+    SELECT follower
+    FROM Follower
+    WHERE user = '${req.params.user_id}'`, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
       res.json({});
@@ -263,15 +169,214 @@ const search_songs = async function(req, res) {
     }
   });
 }
+
+// Route 7: GET/top_movies/:user_id
+const top_movies =async function(req, res) {
+  connection.query(
+    `SELECT M.title, M.imdb_link, R.rating
+    FROM MovieRatings R
+    JOIN Movies M ON R.movie_id = M.id
+    WHERE R.username = '${req.params.user_id}'
+    ORDER BY R.rating DESC
+    LIMIT 5
+    `,  (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+    } 
+  }) 
+}
+
+// Route 8: GET /two_degree/:user_id
+const two_degree = async function(req, res) {
+  const currUser= req.params.user_id
+
+  connection.query(
+    `WITH D0 AS (
+      SELECT curr_following 
+      FROM Following F
+      WHERE F.user = '${currUser}'	
+    )
+    (SELECT DISTINCT F2.following AS potential
+    FROM Following F1 
+    JOIN Following F2 ON F1.following = F2.user
+    WHERE F1.user = '${currUser}' AND F2.following <> '${currUser}' AND F2.following NOT IN (
+    SELECT curr_following 
+    FROM D0
+    ) )
+    UNION
+    (SELECT DISTINCT F3.following AS potential
+    FROM Following F1 
+    JOIN Following F2 ON F1.following = F2.user
+    JOIN Following F3 ON F2.following = F3.user
+    WHERE F1.user = '${currUser}' AND F2.following <> '${currUser}' AND F3.following <> '${currUser}' AND F3.following NOT IN (
+    SELECT curr_following 
+    FROM D0
+    ) )`, (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }  
+    }
+  )
+}
+
+
+// Route 10: GET /top_genre/:user_id
+const top_genre = async function(req, res){
+  connection.query(
+    `SELECT genre, COUNT(genre) AS count
+    FROM Following F 
+    JOIN MovieRatings R ON F.following = R.username OR  '${req.params.user_id}' = R.username
+    JOIN MovieGenres G ON R.movie_id = G.movie_id
+    WHERE F.user = '${req.params.user_id}'
+    GROUP BY genre 
+    ORDER BY count DESC
+    LIMIT 1`, (err, data) => {
+      if (err || data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
+}
+
+
+//Route 9: GET /rec/:user_id
+//not tested
+// const rec = async function(req, res){
+//   const currUser = req.params.user_id 
+
+//   connection.query(
+//     `
+//     CREATE VIEW TwoDegree AS (
+//       WITH D0 AS (
+//         SELECT curr_following 
+//         FROM Following F
+//         WHERE F.user = '${currUser}'	
+//       )
+//       (SELECT DISTINCT F2.following AS potential
+//       FROM Following F1 
+//       JOIN Following F2 ON F1.following = F2.user
+//       WHERE F1.user = '${currUser}' AND F2.following <> '${currUser}' AND F2.following NOT IN (
+//       SELECT curr_following 
+//       FROM D0
+//       ) )
+//       UNION
+//       (SELECT DISTINCT F3.following AS potential
+//       FROM Following F1 
+//       JOIN Following F2 ON F1.following = F2.user
+//       JOIN Following F3 ON F2.following = F3.user
+//       WHERE F1.user = '${currUser}' AND F2.following <> '${currUser}' AND F3.following <> '${currUser}' AND F3.following NOT IN (
+//       SELECT curr_following 
+//       FROM D0
+//       ) ) 
+//     )
+
+//     CREATE VIEW T1 AS(
+//       WITH AllMovie AS (
+//           SELECT distinct id
+//           FROM Movies
+//       ),
+//       RatedByUser AS (
+//           SELECT movie_id, rating
+//           FROM MovieRatings
+//           WHERE username = '${currUser}'
+//   )
+//       SELECT id,
+//       CASE
+//           WHEN rating IS NULL then 0
+//           ELSE rating
+//       END AS rating
+//       FROM AllMovie AM LEFT JOIN RatedByUser RU on RU.movie_id = AM.id
+//     )
+
+//     CREATE VIEW TopFollowed As (
+//       SELECT DISTINCT user as potentials, COUNT(follower) as count
+//       FROM Follower
+//       GROUP BY user
+//       ORDER BY count DESC
+//       LIMIT 20
+//     )
+  
+//     CREATE VIEW T2 AS (
+//       WITH AllMovie AS (
+//           SELECT distinct id
+//           FROM Movies
+//       ),
+//       RatedByUser AS (
+//           SELECT username, movie_id as id, rating
+//           FROM MovieRatings
+//           WHERE username in (SELECT potentials FROM TwoDegree, TopFollowed)
+//       )
+//       SELECT AM.id as id, username,
+//       CASE
+//           WHEN (AM.id, username) not in (SELECT id, username FROM RatedByUser) THEN 0
+//           ELSE rating
+//       END AS rating
+//       FROM AllMovie AM, RatedByUser RU
+//     )
+  
+//     WITH DotProduct AS (
+//     SELECT T2.username as user,
+//     SUM(T1.rating * T2.rating) / (SQRT(SUM(T1.rating * T1.rating)) * SQRT(SUM(T2.rating * T2.rating))) as Dot_Product
+//     FROM T1, T2
+//     GROUP BY T2.username
+//     )
+//     SELECT user
+//     FROM DotProduct
+//     ORDER BY Dot_Product DESC
+//     LIMIT 20
+
+//     DROP VIEW T1
+//     DROP VIEW TopFollowed
+//     DROP VIEW T2
+//     `, (err, data) => {
+//       if (err || data.length === 0) {
+//         console.log(err);
+//         res.json({});
+//       } else {
+//         res.json(data);
+//       }
+//     } 
+//   )
+// } 
+
+
+// // Route 11: POST /register
+// // not tested
+// const register = async function(req,res){
+//   const genre_pref_2 = req.params.genre_pref_1 ?? '%';
+//   const genre_pref_3 = req.params.genre_pref_3 ?? '%';
+//   connection.query(
+//     `INSERT INTO Users (username, password, genre_pref_1, genre_pref_2, genre_pref_3)
+//     VALUES ('${req.params.user_id}', '${req.params.password}','${req.params.genre_pref_1}','${genre_pref_2}','${genre_pref_3}')
+//     `, (err, data) => {
+//       if (err || data.length === 0) {
+//         console.log(err);
+//         res.json({});
+//       } else {
+//         res.json(data);
+//       }
+//     });
+// }
+
+
+
+
 
 module.exports = {
-  author,
-  random,
-  song,
-  album,
-  albums,
-  album_songs,
-  top_songs,
-  top_albums,
-  search_songs,
+  trending,
+  follower,
+  register_rate,
+  search,
+  update,
+  top_movies,
+  two_degree,
+  top_genre
 }
