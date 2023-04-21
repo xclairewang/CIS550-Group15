@@ -1,5 +1,6 @@
 import { AppBar, Container, Toolbar, Typography } from '@mui/material'
 import { NavLink } from 'react-router-dom';
+import "@fontsource/poppins";
 
 // The hyperlinks in the NavBar contain a lot of repeated formatting code so a
 // helper component NavText local to the file is defined to prevent repeated code.
@@ -10,9 +11,9 @@ const NavText = ({ href, text, isMain }) => {
       noWrap
       style={{
         marginRight: '30px',
-        fontFamily: 'monospace',
+        fontFamily: 'poppins',
         fontWeight: 700,
-        letterSpacing: '.3rem',
+        letterSpacing: '.1rem',
       }}
     >
       <NavLink
@@ -36,9 +37,12 @@ export default function NavBar() {
     <AppBar position='static'>
       <Container maxWidth='xl'>
         <Toolbar disableGutters>
-          <NavText href='/' text='SWIFTIFY' isMain />
-          <NavText href='/albums' text='ALBUMS' />
-          <NavText href='/songs' text='SONGS' />
+          <NavText href='/' text='Moowie' isMain />
+          <NavText href='/trending' text='Trending' />
+          <NavText href='/social' text='Socials' />
+          <NavText href='/profile' text='Profile' />
+          {/*<NavText href='/albums' text='ALBUMS' />*/}
+          {/*<NavText href='/songs' text='SONGS' />*/}
         </Toolbar>
       </Container>
     </AppBar>

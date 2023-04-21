@@ -1,20 +1,30 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { CssBaseline, ThemeProvider } from '@mui/material'
-import { indigo, amber } from '@mui/material/colors'
+import {CssBaseline, ThemeProvider, Typography} from '@mui/material'
 import { createTheme } from "@mui/material/styles";
+import "@fontsource/poppins";
 
 import NavBar from './components/NavBar';
 import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
 import AlbumsPage from './pages/AlbumsPage';
 import SongsPage from './pages/SongsPage';
 import AlbumInfoPage from './pages/AlbumInfoPage'
 
-// createTheme enables you to customize the look and feel of your app past the default
-// in this case, we only change the color scheme
+/******************
+ * IN USE *
+ ******************/
+
 export const theme = createTheme({
+  typography: {
+    fontFamily: 'poppins',
+  },
   palette: {
-    primary: indigo,
-    secondary: amber,
+    primary: {
+      main: '#bf360c',
+    },
+    secondary: {
+      main: '#ffccbc',
+    },
   },
 });
 
@@ -30,9 +40,10 @@ export default function App() {
         <NavBar />
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/albums" element={<AlbumsPage />} />
-          <Route path="/albums/:album_id" element={<AlbumInfoPage />} />
-          <Route path="/songs" element={<SongsPage />} />
+          {/*<Route path="/" element={<LoginPage />} />*/}
+          {/*<Route path="/albums" element={<AlbumsPage />} />*/}
+          {/*<Route path="/albums/:album_id" element={<AlbumInfoPage />} />*/}
+          {/*<Route path="/songs" element={<SongsPage />} />*/}
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
