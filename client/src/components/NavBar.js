@@ -3,13 +3,21 @@ import { NavLink } from 'react-router-dom';
 import "@fontsource/poppins";
 
 // TODO: add logo, change profile tab to picture and make drop downs
-export default function NavBar({loggedIn}) {
+export default function NavBar({loggedIn, username}) {
   if (loggedIn) {
     return (
       <AppBar position='static'>
         <Container maxWidth="xl" >
-          <Toolbar disableGutters sx={{justifyContent: 'flex-end'}}>
-            <Typography variant='h5' noWrap style={{
+          <Toolbar disableGutters sx={{justifyContent: 'center'}}>
+            <Typography variant='v7' noWrap style={{
+              // marginLeft: '%',
+              fontWeight: 700,
+              letterSpacing: '.1rem',
+            }}>
+                Hi, {username}!
+            </Typography>
+            <Typography variant='v7' noWrap style={{
+              marginLeft: '15%',
               fontWeight: 700,
               letterSpacing: '.1rem',
             }}>
@@ -20,11 +28,18 @@ export default function NavBar({loggedIn}) {
                   textDecoration: 'none',
                 }}
               >
-                Moowie
+                Trending
               </NavLink>
             </Typography>
+            <Typography variant='h5' noWrap style={{
+              marginLeft: '15%',
+              fontWeight: 700,
+              letterSpacing: '.1rem',
+            }}>
+                Moowie
+            </Typography>
             <Typography variant='v7' noWrap style={{
-              marginLeft: '19%',
+              marginLeft: '15%',
               fontWeight: 700,
               letterSpacing: '.1rem',
             }}>

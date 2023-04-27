@@ -10,19 +10,82 @@ import {
   Typography
 } from "@mui/material";
 import {useState} from "react";
+import App from "../App.js";
+import * as PropTypes from "prop-types";
+import Alert from '@mui/material/Alert';
+import Stack from '@mui/material/Stack';
+// var sha256 = require('js-sha256');
+import sha256 from 'crypto-js/sha256';
+
+function Topography(props) {
+  return null;
+}
 
 
+Topography.propTypes = {children: PropTypes.node};
 export default function LoginPage(props) {
-  // const [email, setEmail] = useState('')
+
   // TODO: create usestate for all fields, check inputs, connect to db
+
+  // const [loginResult, setLoginResult] = useState(null);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  // const bcrypt = require("bcrypt")
+
+  const config = require('../config.json');
+
   const handleSignIn = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    props.onLoggedIn('dummyUser')
+    // props.onLoggedIn('dummyUser')
+    const username = data.get('email');
+    const password = data.get('password')
     console.log({
       email: data.get('email'),
       password: data.get('password'),
     });
+    // setUsername(data.get('email'));
+    // setPassword(data.get('password'));
+
+    if (username === "" | password === "") {
+      setErrorMsg("Incorrect username or password!");
+    }
+
+    console.log(`http://${config.server_host}:${config.server_port}/login?username=${username}&password=${password}`);
+
+    fetch(`http://${config.server_host}:${config.server_port}/login?username=${username}&password=${password}`)
+      .then(res => res.json())
+      .then(resJson => {
+        console.log(resJson);
+        if (Object.keys(resJson).length === 0) {
+          setErrorMsg("Incorrect username or password!");
+        } else {
+          props.onLoggedIn(username);
+        }
+      });
+
+  };
+
+
+  // Function to check username and password, and turn to homepage if match success
+  const login = () => {
+    // if (username == null | password == null) {
+    //   setErrorMsg("Incorrect username or password!");
+    // }
+    // fetch(`http://${config.server_host}:${config.server_port}/login?username=${username}&password=${password}`)
+    //   .then(res => res.json())
+    //   .then(resJson => {
+    //     setLoginResult(resJson);
+    //   });
+    //
+    // if (loginResult.length == 0 ) {
+    //   setErrorMsg("Incorrect username or password!");
+    // } else if (sha256(password) != loginResult.password) {
+    //   setErrorMsg("Incorrect username or password!");
+    // } else {
+    //   props.onLoggedIn('username');
+    // }
   };
 
   return (
@@ -35,6 +98,9 @@ export default function LoginPage(props) {
             alignItems: 'center',
           }}
         >
+          { errorMsg && (<Stack sx={{ width: '100%', margin:3}}>
+            <Alert severity="error">{errorMsg}</Alert>
+          </Stack>)}
           <Avatar sx={{ m: 1, color: 'secondary.main' }}>
             {/*<LockOutlinedIcon />*/}
           </Avatar>
@@ -62,10 +128,6 @@ export default function LoginPage(props) {
               id="password"
               autoComplete="current-password"
             />
-            {/*<FormControlLabel*/}
-            {/*  control={<Checkbox value="remember" color="primary" />}*/}
-            {/*  label="Remember me"*/}
-            {/*/>*/}
             <Button
               type="submit"
               fullWidth

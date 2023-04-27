@@ -47,7 +47,7 @@ export default function App() {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <NavBar loggedIn={false}/>
+        <NavBar loggedIn={false} username={currentUser}/>
         <div>
           {
             currentForm === 'login' ? <LoginPage onFormSwitch={toggleForm} onLoggedIn={toggleStatus}/> : <RegisterPage onFormSwitch={toggleForm} onLoggedIn={toggleStatus}/>
@@ -60,9 +60,9 @@ export default function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <BrowserRouter>
-          <NavBar loggedIn={true}/>
+          <NavBar loggedIn={true} username={currentUser}/>
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<HomePage username={currentUser}/>} />
             {/*<Route path="/" element={<LoginPage />} />*/}
             {/*<Route path="/albums" element={<AlbumsPage />} />*/}
             {/*<Route path="/albums/:album_id" element={<AlbumInfoPage />} />*/}

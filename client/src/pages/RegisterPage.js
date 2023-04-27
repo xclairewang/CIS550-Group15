@@ -9,10 +9,25 @@ import {
   TextField,
   Typography
 } from "@mui/material";
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import {useState} from "react";
+import FormControl from '@mui/material/FormControl';
+import ToggleButton from "@mui/material/ToggleButton";
 
 
 export default function RegisterPage(props) {
   // TODO: add necessary fields to register
+  const allGenres = ['Documentary', 'Short', 'Animation', 'Comedy', 'Romance', 'Sport',
+       'News', 'Drama', 'Fantasy', 'Horror', 'Biography', 'Music', 'War', 'Crime',
+       'Western', 'Family', 'Adventure', 'Action', 'History', 'Mystery', 'Sci-Fi',
+       'Musical', 'Thriller', 'Film-Noir', 'Game-Show', 'Talk-Show', 'Reality-TV', 'Adult']
+  const [genre, setGenre] = useState('')
+  const handleGenre = (event) => {
+    setGenre(event.target.value);
+  };
+
   const handleRegister = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -21,6 +36,25 @@ export default function RegisterPage(props) {
       password: data.get('password'),
     });
   };
+
+  // POST info use json body
+
+  // const register = () => {
+  //
+  //   fetch(`http://${config.server_host}:${config.server_port}/login?username=${username}&password=${password}`)
+  //     .then(res => res.json())
+  //     .then(resJson => {
+  //       setLoginResult(resJson);
+  //     });
+  //
+  //   if (loginResult.length == 0 ) {
+  //     setErrorMsg("Incorrect username or password!");
+  //   } else if (sha256(password) != loginResult.password) {
+  //     setErrorMsg("Incorrect username or password!");
+  //   } else {
+  //     props.onLoggedIn('username');
+  //   }
+  // };
 
   return (
       <Container component="main" maxWidth="xs">
@@ -59,10 +93,24 @@ export default function RegisterPage(props) {
               id="password"
               autoComplete="current-password"
             />
-            {/*<FormControlLabel*/}
-            {/*  control={<Checkbox value="remember" color="primary" />}*/}
-            {/*  label="Remember me"*/}
-            {/*/>*/}
+            <FormControl sx={{ m: 1, minWidth: 120 }}>
+              <InputLabel>Genre1</InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                value={genre}
+                label="Genre"
+                onChange={handleGenre}
+
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+                {allGenres.map((g) =>
+                    <MenuItem value={g}>{g}</MenuItem>
+                )}
+              </Select>
+            </FormControl>
             <Button
               type="submit"
               fullWidth
