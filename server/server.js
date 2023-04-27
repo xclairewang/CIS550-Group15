@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const config = require('./config');
 const routes = require('./routes');
+const bodyParser = require('body-parser');
 
 /******************
  * IN USE *
@@ -11,18 +12,22 @@ const app = express();
 app.use(cors({
   origin: '*',
 }));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
 
 // We use express to define our various API endpoints and
 // provide their handlers that we implemented in routes.js
 app.get('/trending/:user_id', routes.trending);
+app.get('/movie/:user_id/:movie_id', routes.movie)
 app.get('/follower/:user_id', routes.follower);
 app.get('/register_rate', routes.register_rate);
-app.get('/search', routes.search);
+app.get('/search/:user_id', routes.search);
 app.get('/update/:user_id', routes.update);
 app.get('/top_movie/:user_id', routes.top_movies);
 app.get('/two_degree/:user_id', routes.two_degree);
 app.get('/top_genre/:user_id',routes.top_genre);
 app.get('/rec/:user_id',routes.rec);
+app.get('/login', routes.login)
 
 app.post('/create_views/:user_id',routes.create_views);
 app.post('/register', routes.register);
