@@ -8,7 +8,7 @@ import {
   Grid,
   Link,
   Slider,
-  TextField,
+  TextField, Toolbar,
   Typography
 } from '@mui/material';
 import Stack from '@mui/joy/Stack';
@@ -20,11 +20,7 @@ import * as PropTypes from "prop-types";
 
 const config = require('../config.json');
 
-function Item(props) {
-  return null;
-}
-
-Item.propTypes = {children: PropTypes.node};
+// TODO: fix movie cards; add modal view for each movie; fix some weird titles; movie posters; search
 export default function HomePage(username) {
 
   const [trendingMovies, setTrendingMovies] = useState([]);
@@ -85,6 +81,7 @@ export default function HomePage(username) {
 
   return (
     <Container disableGutters maxWidth={false}>
+      <Toolbar />
       <Grid container spacing={3} alignItems="center" justifyContent="center"  sx={{ width:'50%', mx:'auto' }}>
         <Grid item xs={12}>
           <TextField fullWidth label="Enter a movie title..." id="fullWidth" margin="normal"
@@ -156,8 +153,9 @@ export default function HomePage(username) {
       <Grid container alignItems="center" justifyContent="center" spacing={3} sx={{ mx:'auto', mt:5 }}>
         {trendingMovies.map((movie) =>
           <Grid item>
-            <MovieCard key={movie.id} title={movie.title} year={movie.year} rating={movie.imdb_rating}
-                       link={'https://'.concat(movie.imdb_link)} watched={movie.watched}/>
+            {/*<MovieCard key={movie.id}  id={movie.id} title={movie.title} year={movie.year} rating={movie.imdb_rating}*/}
+            {/*           link={'https://'.concat(movie.imdb_link)} watched={movie.watched}/>*/}
+            <MovieCard key={movie.id}  id={movie.id} title={movie.title} link={'https://'.concat(movie.imdb_link)} />
           </Grid>
         )}
       </Grid>

@@ -7,10 +7,12 @@ import NavBar from './components/NavBar';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ProfilePage from "./pages/ProfilePage";
 import AlbumsPage from './pages/AlbumsPage';
 import SongsPage from './pages/SongsPage';
 import AlbumInfoPage from './pages/AlbumInfoPage'
 import {useState} from "react";
+import SocialPage from "./pages/SocialPage";
 
 /******************
  * IN USE *
@@ -50,7 +52,7 @@ export default function App() {
         <NavBar loggedIn={false} username={currentUser}/>
         <div>
           {
-            currentForm === 'login' ? <LoginPage onFormSwitch={toggleForm} onLoggedIn={toggleStatus}/> : <RegisterPage onFormSwitch={toggleForm} onLoggedIn={toggleStatus}/>
+            currentForm === 'login' ? <LoginPage onFormSwitch={toggleForm} onLoggedIn={toggleStatus} /> : <RegisterPage onFormSwitch={toggleForm} onLoggedIn={toggleStatus}/>
           }
         </div>
       </ThemeProvider>
@@ -63,7 +65,8 @@ export default function App() {
           <NavBar loggedIn={true} username={currentUser}/>
           <Routes>
             <Route path="/" element={<HomePage username={currentUser}/>} />
-            {/*<Route path="/" element={<LoginPage />} />*/}
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/socials" element={<SocialPage />} />
             {/*<Route path="/albums" element={<AlbumsPage />} />*/}
             {/*<Route path="/albums/:album_id" element={<AlbumInfoPage />} />*/}
             {/*<Route path="/songs" element={<SongsPage />} />*/}

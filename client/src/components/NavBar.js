@@ -1,12 +1,35 @@
 import { AppBar, Container, Toolbar, Typography } from '@mui/material'
 import { NavLink } from 'react-router-dom';
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
+import AccountCircle from '@mui/icons-material/AccountCircle';
+import MenuItem from '@mui/material/MenuItem';
+import Menu from '@mui/material/Menu';
+import * as PropTypes from "prop-types";
+import {useState} from "react";
 import "@fontsource/poppins";
 
 // TODO: add logo, change profile tab to picture and make drop downs
-export default function NavBar({loggedIn, username}) {
-  if (loggedIn) {
+export default function NavBar(props) {
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleProfile = () => {
+    setAnchorEl(null);
+  }
+
+  const handleLogout = () => {
+  }
+
+  if (props.loggedIn) {
     return (
-      <AppBar position='static'>
+      <AppBar position='fixed' sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Container maxWidth="xl" >
           <Toolbar disableGutters sx={{justifyContent: 'center'}}>
             <Typography variant='v7' noWrap style={{
@@ -14,7 +37,7 @@ export default function NavBar({loggedIn, username}) {
               fontWeight: 700,
               letterSpacing: '.1rem',
             }}>
-                Hi, {username}!
+                Hi, {props.username}!
             </Typography>
             <Typography variant='v7' noWrap style={{
               marginLeft: '15%',
@@ -53,21 +76,60 @@ export default function NavBar({loggedIn, username}) {
                 Socials
               </NavLink>
             </Typography>
-            <Typography variant='v7' noWrap style={{
-              marginLeft: '18%',
-              fontWeight: 700,
-              letterSpacing: '.1rem',
-            }}>
-              <NavLink
-                to='/profile'
-                style={{
-                  color: 'inherit',
-                  textDecoration: 'none',
-                }}
+            <IconButton
+                size="large"
+                aria-label="account of current user"
+                aria-controls="menu-appbar"
+                aria-haspopup="true"
+                onClick={handleMenu}
+                color="inherit"
+                style={{marginLeft: '15%'}}
               >
-                Profile
-              </NavLink>
-            </Typography>
+                <AccountCircle />
+              </IconButton>
+              <Menu
+                id="menu-appbar"
+                anchorEl={anchorEl}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+              >
+                <MenuItem onClick={handleProfile}>
+                  <NavLink
+                    to='/profile'
+                    style={{
+                      color: 'inherit',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    Profile
+                  </NavLink>
+                </MenuItem>
+                <MenuItem onClick={handleLogout}>Logout</MenuItem>
+              </Menu>
+            {/*<Typography variant='v7' noWrap style={{*/}
+            {/*  marginLeft: '18%',*/}
+            {/*  fontWeight: 700,*/}
+            {/*  letterSpacing: '.1rem',*/}
+            {/*}}>*/}
+              {/*<NavLink*/}
+              {/*  to='/profile'*/}
+              {/*  style={{*/}
+              {/*    color: 'inherit',*/}
+              {/*    textDecoration: 'none',*/}
+              {/*  }}*/}
+              {/*>*/}
+              {/*  Profile*/}
+              {/*</NavLink>*/}
+            {/*</Typography>*/}
           </Toolbar>
         </Container>
       </AppBar>

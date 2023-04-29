@@ -20,8 +20,6 @@ import sha256 from 'crypto-js/sha256';
 function Topography(props) {
   return null;
 }
-
-
 Topography.propTypes = {children: PropTypes.node};
 export default function LoginPage(props) {
 
@@ -113,7 +111,7 @@ export default function LoginPage(props) {
               required
               fullWidth
               id="email"
-              label="Email Address"
+              label="Username"
               name="email"
               autoComplete="email"
               autoFocus

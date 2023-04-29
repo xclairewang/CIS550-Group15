@@ -14,18 +14,25 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import {useState} from "react";
 import FormControl from '@mui/material/FormControl';
+import Chip from '@mui/material/Chip';
+import OutlinedInput from '@mui/material/OutlinedInput';
 import ToggleButton from "@mui/material/ToggleButton";
 
-
+//TODO: rate some movies for registration; set max genres to 3; fix UI for genres
 export default function RegisterPage(props) {
-  // TODO: add necessary fields to register
   const allGenres = ['Documentary', 'Short', 'Animation', 'Comedy', 'Romance', 'Sport',
        'News', 'Drama', 'Fantasy', 'Horror', 'Biography', 'Music', 'War', 'Crime',
        'Western', 'Family', 'Adventure', 'Action', 'History', 'Mystery', 'Sci-Fi',
        'Musical', 'Thriller', 'Film-Noir', 'Game-Show', 'Talk-Show', 'Reality-TV', 'Adult']
-  const [genre, setGenre] = useState('')
+  const [genre, setGenre] = useState([])
+  const [frame, setFrame] = useState(0)
   const handleGenre = (event) => {
-    setGenre(event.target.value);
+    const {
+      target: { value },
+    } = event;
+    setGenre(
+      typeof value === 'string' ? value.split(',') : value,
+    );
   };
 
   const handleRegister = (event) => {
@@ -55,8 +62,8 @@ export default function RegisterPage(props) {
   //     props.onLoggedIn('username');
   //   }
   // };
-
-  return (
+  if (frame === 0) {
+    return (
       <Container component="main" maxWidth="xs">
         <Box
           sx={{
@@ -78,7 +85,7 @@ export default function RegisterPage(props) {
               required
               fullWidth
               id="email"
-              label="Email Address"
+              label="Username"
               name="email"
               autoComplete="email"
               autoFocus
@@ -93,21 +100,28 @@ export default function RegisterPage(props) {
               id="password"
               autoComplete="current-password"
             />
-            <FormControl sx={{ m: 1, minWidth: 120 }}>
-              <InputLabel>Genre1</InputLabel>
+            <FormControl sx={{ marginTop:3, minWidth: 400 }}>
+              <InputLabel>Fav Genre</InputLabel>
               <Select
-                labelId="demo-simple-select-label"
                 id="demo-simple-select"
+                multiple
                 value={genre}
                 label="Genre"
                 onChange={handleGenre}
-
+                input={<OutlinedInput id="select-multiple-chip" label="Chip" />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {selected.map((value) => (
+                      <Chip key={value} label={value} />
+                    ))}
+                  </Box>
+                )}
               >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
+                {/*<MenuItem value="">*/}
+                {/*  <em>None</em>*/}
+                {/*</MenuItem>*/}
                 {allGenres.map((g) =>
-                    <MenuItem value={g}>{g}</MenuItem>
+                    <MenuItem key={g} value={g}>{g}</MenuItem>
                 )}
               </Select>
             </FormControl>
@@ -116,6 +130,7 @@ export default function RegisterPage(props) {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
+              onClick={() => setFrame(1)}
             >
               Submit
             </Button>
@@ -134,5 +149,23 @@ export default function RegisterPage(props) {
           </Box>
         </Box>
       </Container>
-  );
+    );
+  } else if (frame <= 3) {
+    return(
+      <Container component="main" maxWidth="xs">
+        <Box
+          sx={{
+            marginTop: 8,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          Rating1
+        </Box>
+      </Container>
+    );
+  }
+
+
 }
