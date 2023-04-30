@@ -17,11 +17,7 @@ import Stack from '@mui/material/Stack';
 // var sha256 = require('js-sha256');
 import sha256 from 'crypto-js/sha256';
 
-function Topography(props) {
-  return null;
-}
-Topography.propTypes = {children: PropTypes.node};
-export default function LoginPage(props) {
+export default function LoginPage({onFormSwitch, onLoggedIn}) {
 
   // TODO: create usestate for all fields, check inputs, connect to db
 
@@ -33,15 +29,26 @@ export default function LoginPage(props) {
 
   const config = require('../config.json');
 
+  const handleViewCreation = (username) => {
+    const requestOptions = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 'user_id' : username })
+    };
+    fetch(`http://${config.server_host}:${config.server_port}/create_views/${username}`, requestOptions);
+  }
+
   const handleSignIn = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     // props.onLoggedIn('dummyUser')
     const username = data.get('email');
     const password = data.get('password')
+    const pw_hash = sha256(password).toString();
     console.log({
       email: data.get('email'),
       password: data.get('password'),
+      hash: pw_hash
     });
     // setUsername(data.get('email'));
     // setPassword(data.get('password'));
@@ -59,19 +66,14 @@ export default function LoginPage(props) {
         if (Object.keys(resJson).length === 0) {
           setErrorMsg("Incorrect username or password!");
         } else {
-          props.onLoggedIn(username);
+          handleViewCreation((username));
+          onLoggedIn(username);
         }
       });
 
   };
 
-  const handleViewCreation = () => {
-    const requestOptions = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: 'React POST Request Example' })
-    };
-  }
+
 
 
   // Function to check username and password, and turn to homepage if match success
@@ -149,7 +151,7 @@ export default function LoginPage(props) {
               {/*  </Link>*/}
               {/*</Grid>*/}
               <Grid item>
-                <Link variant="body2" onClick={() => props.onFormSwitch('register')}>
+                <Link variant="body2" onClick={() => onFormSwitch('register')}>
                   {"Don't have an account? Sign Up"}
                 </Link>
               </Grid>

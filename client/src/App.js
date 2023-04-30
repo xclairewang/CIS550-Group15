@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import {CssBaseline, ThemeProvider, Typography} from '@mui/material'
+import {CssBaseline, ThemeProvider } from '@mui/material'
 import { createTheme } from "@mui/material/styles";
 import "@fontsource/poppins";
 
@@ -8,11 +8,9 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProfilePage from "./pages/ProfilePage";
-import AlbumsPage from './pages/AlbumsPage';
-import SongsPage from './pages/SongsPage';
-import AlbumInfoPage from './pages/AlbumInfoPage'
 import {useState} from "react";
 import SocialPage from "./pages/SocialPage";
+const config = require('./config.json');
 
 /******************
  * IN USE *
@@ -48,8 +46,11 @@ export default function App() {
 
   const handleLogout = () => {
     setCurrentForm('login')
+    // setCurrentUser('')
+    fetch(`http://${config.server_host}:${config.server_port}/logout/${currentUser}`);
+    // setCurrentForm('login')
     setCurrentUser('')
-    console.log("logged out")
+    console.log("logged out");
   }
 
   if (currentUser === '') {
@@ -73,10 +74,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomePage username={currentUser}/>} />
             <Route path="/profile" element={<ProfilePage username={currentUser}/>} />
-            <Route path="/socials" element={<SocialPage />} />
-            {/*<Route path="/albums" element={<AlbumsPage />} />*/}
-            {/*<Route path="/albums/:album_id" element={<AlbumInfoPage />} />*/}
-            {/*<Route path="/songs" element={<SongsPage />} />*/}
+            <Route path="/socials" element={<SocialPage username={currentUser} />} />
           </Routes>
         </BrowserRouter>
       </ThemeProvider>

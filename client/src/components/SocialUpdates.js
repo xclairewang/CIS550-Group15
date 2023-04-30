@@ -6,49 +6,65 @@ import Avatar from '@mui/material/Avatar';
 import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
 import Rating from '@mui/material/Rating';
+import {useEffect, useState} from "react";
+import config from "../config.json";
 
-export default function SocialUpdates() {
+export default function SocialUpdates({ username, timestamp, id, comment, title, year, rating}) {
+  const [poster, setPoster] = useState('');
+  const [genre, setGenre] = useState('');
+  useEffect(() => {
+    // Fetch movie data from omdb API
+    fetch(`https://www.omdbapi.com/?i=${id}&apikey=81d960fe`)
+      .then(res  => res.json())
+      .then(resJson => {
+        const posterURL = resJson.Poster;
+        setGenre(resJson.Genre);
+        if (posterURL !== 'N/A') {
+          setPoster(posterURL)
+        } else {
+          setPoster("https://www.omdbapi.com/src/poster.jpg")
+        }
+      });
+  },[]);
   return(
     <Container>
-      <Card sx={{ maxHeight: 530, display: 'flex'}}>
+      <Card sx={{ maxHeight: 530}}>
         <Grid container spacing={1} alignItems="center" justifyContent="center" >
         <Grid item xs={9}>
           <CardHeader
             avatar={
               <Avatar sx={{ bgcolor: '#bf360c' }} >
-                R
+                {username[0]}
               </Avatar>
             }
-            title="Username"
-            subheader="Date-Time: April 10, 2023 10:00 AM"
+            title={username}
+            subheader={timestamp}
           />
-          <CardContent sx={{ height:150, ml:4.5, borderLeft: 2, borderColor:'#bf360c' }}>
+          <CardContent sx={{ height:150, ml:4.5, borderLeft: 2, borderColor:'#bf360c', width:900 }}>
              <Rating
-               value={3.5}
+               value={rating}
                readOnly
                precision={0.5}
                size="large"
              />
-             <Typography paragraph>
-               blah blah blah blah
-             </Typography>
+            {({comment} === null || {comment} === '') ? (<Typography paragraph>Comment not available</Typography>) : (<Typography paragraph>{comment}</Typography>)}
           </CardContent>
           <CardContent>
             <Typography variant="h6">
-              Pirates of the Caribbean: The Curse OF THE BLACK PEARL
+              {title}
             </Typography>
             <Typography variant="subtitle2" color="text.secondary">
-              (2001)
+              ({year})
             </Typography>
             <Typography variant="subtitle2" color="text.secondary">
-              this is genre
+              {genre}
             </Typography>
           </CardContent>
         </Grid>
         <Grid item xs={3}>
           <CardMedia
           sx={{ height: 350}}
-          image="https://www.omdbapi.com/src/poster.jpg"
+          image={poster}
           title= "Poster"/>
         </Grid>
 

@@ -10,7 +10,9 @@ import FollowList from "./FollowList";
 import Modal from "@mui/material/Modal";
 import MovieInfo from "./MovieInfo";
 
-export default function MovieCard({id, title}) {
+const config = require('../config.json');
+
+export default function MovieCard({id, title, username}) {
   const [open, setOpen] = useState(false);
   const handleOpenMovie = () => {
     setOpen(true);
@@ -20,37 +22,51 @@ export default function MovieCard({id, title}) {
   };
   // from the API
   const [poster, setPoster] = useState('');
-  const [country, setCountry] = useState('');
   const [genre, setGenre] = useState('');
-  const [director, setDirector] = useState('');
   const [year, setYear] = useState('');
   const [plot, setPlot] = useState('');
   const [runtime, setRuntime] = useState('');
   // from fetch
-  const [rating, setRating] = useState(7.5);
-  const [link, setLink] = useState('')
-  const [watched, setWatched] = useState(1)
+  const [rating, setRating] = useState(null);
+  const [link, setLink] = useState('');
+  const [watched, setWatched] = useState(0);
+
+
+  const [fetchData, setFetchData] = useState([]);
   useEffect(() => {
+
+    // Fetch movie data from omdb API
     fetch(`https://www.omdbapi.com/?i=${id}&apikey=81d960fe`)
       .then(res  => res.json())
       .then(resJson => {
         const posterURL = resJson.Poster;
-        setCountry(resJson.Country);
         setGenre(resJson.Genre);
         setYear(resJson.Year);
-        setDirector(resJson.Director)
-        setPlot(resJson.Plot)
-        setRuntime(resJson.Runtime)
+        setPlot(resJson.Plot);
+        setRuntime(resJson.Runtime);
 
         if (posterURL !== 'N/A') {
           setPoster(posterURL)
         } else {
           setPoster("https://www.omdbapi.com/src/poster.jpg")
         }
-        console.log(resJson)
-        // setPoster(resJson.posters[0])
-      })
-  },[]);
+      });
+    // console.log(username);
+    fetch(`http://${config.server_host}:${config.server_port}/movie/${username}/${id}`)
+      .then(res => res.json())
+      .then(resJson => {
+        setFetchData(resJson);
+        // console.log(`http://${config.server_host}:${config.server_port}/movie/${username}/${id}`)
+        // console.log(resJson);
+        // resJson.map((movie) => {
+        //   setRating(movie.imdb_rating);
+        //   console.log(rating);
+        //   setLink('https://'.concat(movie.imdb_link));
+        //   setWatched(movie.watched);
+        // });
+      });
+  },[open]);
+
 
   return(
     <Container>
@@ -78,15 +94,18 @@ export default function MovieCard({id, title}) {
         </CardActions>
       </Card>
       </CardActionArea>
-      <Modal
-          open={open}
-          onClose={handleCloseMovie}
-          aria-labelledby="child-modal-title"
-          aria-describedby="child-modal-description"
-        >
-          <MovieInfo title={title} poster={poster} rating={rating} link={link} watched={watched}
-                     country={country} genre={genre} director={director} year={year} plot={plot} runtime={runtime}> </MovieInfo>
-      </Modal>
+      { Object.keys(fetchData).length !== 0 && fetchData.map((fd) =>
+        <Modal
+            open={open}
+            onClose={handleCloseMovie}
+            aria-labelledby="child-modal-title"
+            aria-describedby="child-modal-description"
+          >
+            <MovieInfo title={title} poster={poster} rating={fd.imdb_rating} link={'https://'.concat(fd.imdb_link)} watched={fd.watched} closeModal={handleCloseMovie}
+                       genre={genre} year={year} plot={plot} runtime={runtime} username={username} id={id}> </MovieInfo>
+        </Modal>
+        )
+      }
     </Container>
   );
 };

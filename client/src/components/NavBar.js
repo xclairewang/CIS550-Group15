@@ -8,6 +8,7 @@ import Menu from '@mui/material/Menu';
 import * as PropTypes from "prop-types";
 import {useState} from "react";
 import "@fontsource/poppins";
+import logo from "../logo-white.png"
 
 // TODO: add logo, change profile tab to picture and make drop downs
 export default function NavBar(props) {
@@ -24,8 +25,8 @@ export default function NavBar(props) {
     setAnchorEl(null);
   }
 
-  const handleLogout = () => {
-  }
+
+
 
   if (props.loggedIn) {
     return (
@@ -54,8 +55,10 @@ export default function NavBar(props) {
                 Trending
               </NavLink>
             </Typography>
+            <img src={logo} style={{
+              marginLeft: '15%', height: 50 }}/>
             <Typography variant='h5' noWrap style={{
-              marginLeft: '15%',
+              marginLeft: 5,
               fontWeight: 700,
               letterSpacing: '.1rem',
             }}>
@@ -113,7 +116,9 @@ export default function NavBar(props) {
                     Profile
                   </NavLink>
                 </MenuItem>
-                <MenuItem onClick={handleLogout}>Logout</MenuItem>
+                <MenuItem onClick={props.handleLogout}>
+                    Logout
+                </MenuItem>
               </Menu>
             {/*<Typography variant='v7' noWrap style={{*/}
             {/*  marginLeft: '18%',*/}
@@ -139,7 +144,9 @@ export default function NavBar(props) {
     <AppBar position='static'>
       <Container maxWidth="xl" >
         <Toolbar disableGutters sx={{justifyContent: 'center'}}>
+          <img src={logo} style={{ height: 50 }}/>
           <Typography variant='h5' noWrap style={{
+            marginLeft: 5,
             fontWeight: 700,
             letterSpacing: '.1rem',
           }}>

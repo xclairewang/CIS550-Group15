@@ -24,7 +24,7 @@ const config = require('../config.json');
 export default function HomePage(username) {
 
   const [trendingMovies, setTrendingMovies] = useState([]);
-  const [searchedMovies, setSearchedMovies] = useState({});
+  // const [searchedMovies, setSearchedMovies] = useState({});
 
   const [searchText, setSearchText] = useState('')
   const [year, setYear] = useState([1874, 2023]);
@@ -51,31 +51,40 @@ export default function HomePage(username) {
     setSearchText(event.target.value)
   }
   const handleChangeWatchedByFriend = (event) => {
-    setWatchedByFriend(event.target.checked)
+    setWatchedByFriend(event.target.checked);
   }
 
 
   // Runs when rendered for first time. Loads trending movies customized for user.
   useEffect(() => {
+    console.log(username);
     fetch(`http://${config.server_host}:${config.server_port}/trending/${default_username}`)
       .then(res => res.json())
       .then(resJson => {
         const trendingData = resJson.map((movie) => ({id: movie.id, ...movie}));
         setTrendingMovies(trendingData);
-         console.log(trendingData);
       });
   }, []);
 
 
   // Search function for movies
   const search = () => {
-    // fetch(`http://${config.server_host}:${config.server_port}/search?title=${searchText}
-    //   &genre=${genre}&yearLow=${year[0]}&yearHigh=${year[1]}&watchedByFriends=${watchedByFriend}`)
-    //   .then(res => res.json())
-    //   .then(resJson => {
-    //     const searchedData = resJson.map((movie) => ({id: movie.id, ...movie}));
-    //     setTrendingMovies(searchedData);
-    //   });
+    var watched = 0;
+    if (watchedByFriend) { watched = 1}
+    fetch(`http://${config.server_host}:${config.server_port}/search/${username.username}?title=${searchText}&genre=${genre}&yearLow=${year[0]}&yearHigh=${year[1]}&watchedByFriends=${watched}`)
+      .then(res => res.json())
+      .then(resJson => {
+        console.log("original JSON: " + resJson);
+        setTrendingMovies(resJson);
+        // if (Object.keys(resJson).length === 0) {
+        //   return;
+        // // }
+        // const searchedData = trendingMovies.map((movie) => ({id: movie.id, ...movie}));
+        // console.log("searched data: " + searchedData);
+        // // setTrendingMovies(searchedData);
+        // console.log("trending movies: " + trendingMovies);
+
+      });
   }
 
 
@@ -139,7 +148,7 @@ export default function HomePage(username) {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
-              onClick={() => search() }
+              onClick={() => search()}
             >
               Search
             </Button>
@@ -151,11 +160,11 @@ export default function HomePage(username) {
         </Grid>
       </Grid>
       <Grid container alignItems="center" justifyContent="center" spacing={2} sx={{ mt:5 }}>
-        {trendingMovies.map((movie) =>
+        { Object.keys(trendingMovies).length !== 0 && trendingMovies.map((movie) =>
           <Grid item>
             {/*<MovieCard key={movie.id}  id={movie.id} title={movie.title} year={movie.year} rating={movie.imdb_rating}*/}
             {/*           link={'https://'.concat(movie.imdb_link)} watched={movie.watched}/>*/}
-            <MovieCard key={movie.id}  id={movie.id} title={movie.title} />
+            <MovieCard key={movie.id}  id={movie.id} title={movie.title} username={username}/>
           </Grid>
         )}
       </Grid>

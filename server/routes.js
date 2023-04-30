@@ -1,5 +1,6 @@
 const mysql = require('mysql')
 const config = require('./config.json')
+const moment = require('moment')
 
 /******************
  * IN USE *
@@ -10,7 +11,8 @@ const connection = mysql.createConnection({
   user: config.rds_user,
   password: config.rds_password,
   port: config.rds_port,
-  database: config.rds_db
+  database: config.rds_db,
+  multipleStatements: true
 });
 connection.connect((err) => err && console.log(err));
 
@@ -18,7 +20,7 @@ connection.connect((err) => err && console.log(err));
 // Route 1: GET /trending/:user_id
 const trending = async function(req, res) {
   const user_id = req.params.user_id
-  
+
   connection.query (
     `SELECT *
     FROM TrendingMovie`
@@ -31,22 +33,20 @@ const trending = async function(req, res) {
     } else {
       res.json(data);
     }
-  }); 
+  });
 }
 
-// Route 1: GET /movie/:user_id
+// Route 1: GET /movie/:user_id/:movie_id
 const movie = async function(req, res) {
   const user_id = req.params.user_id
   const movie_id = req.params.movie_id
 
   connection.query (
     `SELECT M.id, M.imdb_link, M.imdb_rating,
-      (CASE WHEN R.username = '${user_id}' THEN 1 ELSE 0 END) AS watched
-    FROM Movies M JOIN MovieRatings R ON M.id = R.movie_id
-    WHERE id = '${movie_id}'
-    GROUP BY M.id, M.imdb_link, M.title, M.imdb_rating, M.year, watched
-    ORDER BY M.imdb_rating DESC
-    LIMIT 50`, (err, data) => {
+      (CASE WHEN (SELECT username FROM MovieRatings MR WHERE MR.movie_id = '${movie_id}' AND MR.username = '${user_id}') is null THEN 0 ELSE 1 END) AS watched
+      FROM Movies M
+      WHERE id = '${movie_id}'
+      GROUP BY M.id`, (err, data) => {
       if (err || data.length === 0) {
         // if there is an error for some reason, or if the query is empty (this should not be possible)
         // print the error message and return an empty object instead
@@ -57,7 +57,7 @@ const movie = async function(req, res) {
       }
     }
   )
-} 
+}
 
 // Route 2: GET /register_rate
 const register_rate = async function(req, res) {
@@ -66,12 +66,12 @@ const register_rate = async function(req, res) {
   const genre2 = '%' + req.query.genre2 + '%' ?? '';
   const genre3 = '%' + req.query.genre3 + '%' ?? '';
   console.log(genre1)
-  
+
   connection.query (
     `SELECT *
     FROM MostRatedMovies
-    WHERE genres LIKE '${genre1}' OR genres LIKE '${genre2}' OR genres LIKE '${genre3}'` 
-    
+    WHERE genres LIKE '${genre1}' OR genres LIKE '${genre2}' OR genres LIKE '${genre3}'`
+
     //add back offset once connected with frontend
     //LIMIT ${pageSize} OFFSET ${(page-1) * pageSize}
   , (err, data) => {
@@ -79,11 +79,11 @@ const register_rate = async function(req, res) {
       // if there is an error for some reason, or if the query is empty (this should not be possible)
       // print the error message and return an empty object instead
       console.log(err);
-      res.json({});
+      res.json([]);
     } else {
       res.json(data);
     }
-  }); 
+  });
 }
 
 // Route 3: GET /search/:user_id
@@ -93,7 +93,7 @@ const search = async function(req, res) {
   const genre = req.query.genre ?? '';
   const yearLow = req.query.yearLow ?? 0;
   const yearHigh = req.query.yearHigh ?? 2200;
-  const watchedByFriends = req.query.watchedByFriends ?? 0 
+  const watchedByFriends = req.query.watchedByFriends ?? 0
 
   if(watchedByFriends !=  1) {
 
@@ -106,8 +106,8 @@ const search = async function(req, res) {
         AND year >= ${yearLow}
       GROUP BY id
       HAVING genres LIKE '%${genre}%'
-      LIMIT 10` 
-      
+      LIMIT 10`
+
       //add back offset once connected with frontend
       //LIMIT ${pageSize} OFFSET ${(page-1) * pageSize}
     , (err, data) => {
@@ -115,11 +115,11 @@ const search = async function(req, res) {
         // if there is an error for some reason, or if the query is empty (this should not be possible)
         // print the error message and return an empty object instead
         console.log(err);
-        res.json({});
+        res.json([]);
       } else {
         res.json(data);
       }
-    }); 
+    });
   } else {
 
     connection.query (
@@ -139,8 +139,8 @@ const search = async function(req, res) {
       FROM AM JOIN MovieGenres MG ON AM.id = MG.movie_id
       GROUP BY id
       HAVING genres LIKE '%${genre}%'
-      LIMIT 10` 
-      
+      LIMIT 10`
+
       //add back offset once connected with frontends
       //LIMIT ${pageSize} OFFSET ${(page-1) * pageSize}
     , (err, data) => {
@@ -148,11 +148,11 @@ const search = async function(req, res) {
         // if there is an error for some reason, or if the query is empty (this should not be possible)
         // print the error message and return an empty object instead
         console.log(err);
-        res.json({});
+        res.json([]);
       } else {
         res.json(data);
       }
-    });  
+    });
   }
 
 }
@@ -162,7 +162,7 @@ const search = async function(req, res) {
 const login = async function(req, res) {
   const username = req.query.username;
   const password = req.query.password;
-  
+
   connection.query (
     `SELECT U.username, U.password
     FROM Users U
@@ -176,7 +176,7 @@ const login = async function(req, res) {
         console.log(data);
         res.json(data);
       }
-    }    
+    }
   )
 }
 
@@ -186,21 +186,24 @@ const update = async function(req, res) {
   const pageSize = req.query.page_size ?? 10;
 
   connection.query(
-    `SELECT R.username, M.title, R.rating, M.imdb_link, M.year, M.imdb_rating, R.comment, R.timestamp
+    `SELECT M.id as id, R.username, M.title, R.rating, M.imdb_link, M.year, M.imdb_rating, R.comment, R.timestamp,
+      GROUP_CONCAT(genre, '') AS genres
     FROM Following F
     JOIN MovieRatings R ON F.following = R.username
-    JOIN Movies M on R.movie_id = M.id
+    JOIN Movies M on R.movie_id = M.id 
+    JOIN MovieGenres MG ON M.id = MG.movie_id
     WHERE F.user = '${req.params.user_id}'
+    GROUP BY M.id
     ORDER BY timestamp DESC
     LIMIT ${pageSize} `, (err, data) => {
-      if (err || data.length === 0) {
+      if (err || data === null ||data.length === 0) {
         // if there is an error for some reason, or if the query is empty (this should not be possible)
         // print the error message and return an empty object instead
         console.log(err);
-        res.json({});
+        res.json([]);
       } else {
         res.json(data);
-      } 
+      }
     });
 }
 
@@ -212,29 +215,29 @@ const following = async function(req, res) {
   SELECT following, genre_pref_1, genre_pref_2, genre_pref_3
   FROM Following JOIN Users U on Following.following = U.username
   WHERE user = '${req.params.user_id}'`, (err, data) => {
-    if (err || data.length === 0) {
+    if (err || data === null ||data.length === 0) {
       console.log(err);
-      res.json({});
+      res.json([]);
     } else {
       res.json(data);
     }
   });
 }
 
-//Route 6.1: GET/following/:user_id
+//Route 6.1: GET/follower/:user_id
 const follower = async function(req, res) {
   connection.query(`
-    WITH UserFollower AS (
-      SELECT Follower.follower as follower, genre_pref_1, genre_pref_2, genre_pref_3
-      FROM Follower JOIN Users ON Follower.user = Users.username
-      WHERE user = '${req.params.user_id}'
-    )
-    SELECT distinct UF.follower as follower, genre_pref_1, genre_pref_2, genre_pref_3,
-       (CASE WHEN UF.follower in (SELECT following FROM Following WHERE user = '${req.params.user_id}') THEN 1 ELSE 0 END) AS watched
-    FROM UserFollower UF JOIN Follower F ON UF.follower = F.user`, (err, data) => {
-    if (err || data.length === 0) {
+  WITH UserFollower AS (
+    SELECT Follower.follower as follower, genre_pref_1, genre_pref_2, genre_pref_3
+    FROM Follower JOIN Users ON Follower.user = Users.username
+    WHERE user = '${req.params.user_id}'
+  )
+  SELECT UF.follower as follower, genre_pref_1, genre_pref_2, genre_pref_3,
+     (CASE WHEN UF.follower in (SELECT following FROM Following WHERE user = '${req.params.user_id}') THEN 0 ELSE 1 END) AS user_could_follow
+  FROM UserFollower UF`, (err, data) => {
+    if (err || data === null ||data.length === 0) {
       console.log(err);
-      res.json({});
+      res.json([]);
     } else {
       res.json(data);
     }
@@ -244,25 +247,25 @@ const follower = async function(req, res) {
 // Route 7: GET/top_movies/:user_id
 const top_movies =async function(req, res) {
   connection.query(
-    `SELECT M.title, M.imdb_link, R.rating
+    `SELECT M.id, M.title, M.imdb_link, R.rating
     FROM MovieRatings R
     JOIN Movies M ON R.movie_id = M.id
-    WHERE R.username = '${req.params.username}'
+    WHERE R.username = '${req.params.user_id}'
     ORDER BY R.rating DESC
     LIMIT 5
     `,  (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
-      res.json({});
+      res.json([]);
     } else {
       res.json(data);
-    } 
-  }) 
+    }
+  })
 }
 
 // Route 8: GET /two_degree/:user_id
 const two_degree = async function(req, res) {
-  const currUser= req.params.username
+  const currUser= req.params.user_id
 
   connection.query(
     `WITH D0 AS (
@@ -288,31 +291,37 @@ const two_degree = async function(req, res) {
     SELECT following 
     FROM D0
     ) )`
-    
+
     , (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
         res.json({});
       } else {
         res.json(data);
-      }  
+      }
     }
   )
 }
 
 
-// Route 10: GET /top_genre/:user_id
-const top_genre = async function(req, res){
+// Route 10: GET /userinfo/:user_id
+const userinfo = async function(req, res){
   connection.query(
-    `SELECT genre, COUNT(genre) AS count
-    FROM Following F 
-    JOIN MovieRatings R ON F.following = R.username OR  '${req.params.username}' = R.username
-    JOIN MovieGenres G ON R.movie_id = G.movie_id
-    WHERE F.user = '${req.params.username}'
-    GROUP BY genre 
-    ORDER BY count DESC
-    LIMIT 10`, (err, data) => {
-      if (err || data.length === 0) {
+    `WITH FollowingCounter AS (
+      SELECT user, COUNT(following) as followingCount
+      FROM Following
+      WHERE user = '${req.params.user_id}'
+    ),
+    FollowerCounter As (
+      SELECT user, COUNT(follower) as followerCount
+      FROM Follower
+      WHERE user = '${req.params.user_id}'
+    )
+    SELECT followingCount, followerCount, genre_pref_1, genre_pref_2, genre_pref_3
+    FROM FollowingCounter LEFT JOIN FollowerCounter ON FollowingCounter.user = FollowerCounter.user
+      JOIN Users ON FollowingCounter.user = Users.username
+    WHERE Users.username = '${req.params.user_id}'`, (err, data) => {
+      if (err || data === null ||data.length === 0) {
         console.log(err);
         res.json({});
       } else {
@@ -326,8 +335,8 @@ const top_genre = async function(req, res){
 // following get genre preference
 //need to be tested
 const create_views = async function(req, res){
-  const currUser = req.body.user_id 
-  
+  const currUser = req.body.user_id
+
   connection.query(
     `CREATE VIEW TwoDegree_${currUser} AS (
       WITH D0 AS (
@@ -347,7 +356,7 @@ const create_views = async function(req, res){
         FROM Following F1
         JOIN Following F2 ON F1.following = F2.user
         JOIN Following F3 ON F2.following = F3.user
-        WHERE F1.user = '${currUser}9' AND F2.following <> '${currUser}' AND F3.following <> '${currUser}' AND F3.following NOT IN (
+        WHERE F1.user = '${currUser}' AND F2.following <> '${currUser}' AND F3.following <> '${currUser}' AND F3.following NOT IN (
         SELECT following
         FROM D0
       ) )
@@ -380,7 +389,7 @@ const create_views = async function(req, res){
       RatedByUser AS (
         (SELECT username, movie_id as id, rating
          FROM MovieRatings
-         WHERE username in (SELECT potentials FROM TopFollowed)
+         WHERE username in (SELECT potentials FROM TopFollowed WHERE potentials NOT IN (SELECT following FROM Following WHERE user = '${currUser}') )
          )
          UNION
          (
@@ -428,21 +437,35 @@ const rec = async function(req, res){
       SUM(T1_${currUser}.rating * T2_${currUser}.rating) / (SQRT(SUM(T1_${currUser}.rating * T1_${currUser}.rating)) * SQRT(SUM(T2_${currUser}.rating * T2_${currUser}.rating))) as Dot_Product
       FROM T1_${currUser} JOIN T2_${currUser} ON T1_${currUser}.movie_id = T2_${currUser}.id
       GROUP BY T2_${currUser}.username )
-    SELECT user
-    FROM DotProduct
+    SELECT user, genre_pref_1, genre_pref_2, genre_pref_3
+    FROM DotProduct DP JOIN Users U on DP.user = U.username
     ORDER BY Dot_Product DESC
     LIMIT 10`, (err, data) => {
+      if (err || data === null || data.length === 0) {
+        console.log(err);
+        res.json([]);
+      } else {
+        res.json(data);
+      }
+    }
+  )
+}
+
+// Route 20: GET /logout/:username
+const logout = async function(req,res){
+  const user_id = req.params.user_id;
+  connection.query(
+    `DROP VIEW T1_${user_id}, T2_${user_id}, TwoDegree_${user_id}, Following_${user_id};
+    `, (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
         res.json({});
       } else {
         res.json(data);
       }
-    } 
+    }
   )
-} 
-
-
+}
 // Route 11: POST /register
 // not tested
 const register = async function(req,res){
@@ -482,7 +505,7 @@ const rate_movie = async function(req,res){
   const username = req.body.username;
   const movie_id = req.params.movie_id;
   const rating = req.body.rating;
-  const timestamp = new Date();
+  var timestamp = moment().format('MMM Do YY h:mm:ss');
   console.log(timestamp);
   const usrComment = req.body.comment ?? '';
   connection.query(
@@ -499,7 +522,7 @@ const rate_movie = async function(req,res){
     });
 }
 
-//Route 13: /delete_rating/:movie_id
+//Route 13: POST /delete_rating/:movie_id
 const delete_rating = async function(req,res){
   const currusr = req.body.username;
   const movieid = req.params.movie_id;
@@ -515,7 +538,7 @@ const delete_rating = async function(req,res){
     });
 }
 
-//Route 14: /new_follow
+//Route 14: POST /new_follow
 const new_follow = async function(req,res){
   const currusr = req.body.username;
   const followid = req.body.follow_id;
@@ -537,24 +560,24 @@ const new_follow = async function(req,res){
             res.status(201).send(`you now follow '${followid}'`)
           }
         });
-        
+
       }
     });
 }
 
-//Route 15: /delete_follow
+//Route 15: POST /delete_follow
 const delete_follow = async function(req,res) {
   const currusr = req.body.username;
   const followid = req.body.follow_id;
   connection.query(
-    `DELETE FROM Following WHERE username = '${currusr}' AND follower = '${followid}'
+    `DELETE FROM Following WHERE user = '${currusr}' AND following = '${followid}'
     `, async (err, data) => {
       if (err) {
         console.log(err);
         res.status(400).send(`Follow unsuccessful. Please try again`);
       } else {
         connection.query(
-          `DELET FROM Follower WHERE following = '${followid}' AND username = '${currusr}'
+          `DELETE FROM Follower WHERE user = '${followid}' AND follower = '${currusr}'
           `, async (err, data) => {
           if (err) {
             console.log(err);
@@ -577,7 +600,7 @@ module.exports = {
   update,
   top_movies,
   two_degree,
-  top_genre,
+  userinfo,
   rec,
   create_views,
   register,
@@ -585,5 +608,6 @@ module.exports = {
   delete_rating,
   new_follow,
   delete_follow,
-  login
+  login,
+  logout,
 }
