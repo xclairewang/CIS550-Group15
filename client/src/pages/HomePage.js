@@ -82,7 +82,7 @@ export default function HomePage(username) {
   return (
     <Container disableGutters maxWidth={false}>
       <Toolbar />
-      <Grid container spacing={3} alignItems="center" justifyContent="center"  sx={{ width:'50%', mx:'auto' }}>
+      <Grid container spacing={3} alignItems="center" justifyContent="center"  sx={{ width:'70%', mx:'auto' }}>
         <Grid item xs={12}>
           <TextField fullWidth label="Enter a movie title..." id="fullWidth" margin="normal"
                      value={searchText} onChange={handleChangeSearchText}/>
@@ -150,12 +150,12 @@ export default function HomePage(username) {
           </Link>
         </Grid>
       </Grid>
-      <Grid container alignItems="center" justifyContent="center" spacing={3} sx={{ mx:'auto', mt:5 }}>
+      <Grid container alignItems="center" justifyContent="center" spacing={2} sx={{ mt:5 }}>
         {trendingMovies.map((movie) =>
           <Grid item>
             {/*<MovieCard key={movie.id}  id={movie.id} title={movie.title} year={movie.year} rating={movie.imdb_rating}*/}
             {/*           link={'https://'.concat(movie.imdb_link)} watched={movie.watched}/>*/}
-            <MovieCard key={movie.id}  id={movie.id} title={movie.title} link={'https://'.concat(movie.imdb_link)} />
+            <MovieCard key={movie.id}  id={movie.id} title={movie.title} />
           </Grid>
         )}
       </Grid>

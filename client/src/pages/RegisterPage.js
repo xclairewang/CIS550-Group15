@@ -17,8 +17,9 @@ import FormControl from '@mui/material/FormControl';
 import Chip from '@mui/material/Chip';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import ToggleButton from "@mui/material/ToggleButton";
+import RatingCard from "../components/RatingCard";
 
-//TODO: rate some movies for registration; set max genres to 3; fix UI for genres
+//TODO: set max genres to 3; implement ratings
 export default function RegisterPage(props) {
   const allGenres = ['Documentary', 'Short', 'Animation', 'Comedy', 'Romance', 'Sport',
        'News', 'Drama', 'Fantasy', 'Horror', 'Biography', 'Music', 'War', 'Crime',
@@ -101,14 +102,14 @@ export default function RegisterPage(props) {
               autoComplete="current-password"
             />
             <FormControl sx={{ marginTop:3, minWidth: 400 }}>
-              <InputLabel>Fav Genre</InputLabel>
+              <InputLabel id="select-label">Genre Preference</InputLabel>
               <Select
                 id="demo-simple-select"
                 multiple
+                required
                 value={genre}
-                label="Genre"
                 onChange={handleGenre}
-                input={<OutlinedInput id="select-multiple-chip" label="Chip" />}
+                input={<OutlinedInput id="select-multiple-chip" label="Genre Preference" />}
                 renderValue={(selected) => (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                     {selected.map((value) => (
@@ -152,7 +153,7 @@ export default function RegisterPage(props) {
     );
   } else if (frame <= 3) {
     return(
-      <Container component="main" maxWidth="xs">
+      <Container component="main">
         <Box
           sx={{
             marginTop: 8,
@@ -161,7 +162,13 @@ export default function RegisterPage(props) {
             alignItems: 'center',
           }}
         >
-          Rating1
+          <Typography gutterBottom variant="h6">
+            Please rate 3 movies to let us know your preference:
+          </Typography>
+          <Typography gutterBottom variant="h6">
+            1/3
+          </Typography>
+          <RatingCard forRegister={1}></RatingCard>
         </Box>
       </Container>
     );
