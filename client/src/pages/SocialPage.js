@@ -6,7 +6,6 @@ import {
 import IconButton from "@mui/material/IconButton";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import ListItemAvatar from "@mui/material/ListItemAvatar";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ListItemText from "@mui/material/ListItemText";
 import ListItem from "@mui/material/ListItem";
 import List from '@mui/material/List';
@@ -14,30 +13,64 @@ import * as React from "react";
 import Drawer from '@mui/material/Drawer';
 import Toolbar from '@mui/material/Toolbar';
 import SocialUpdates from "../components/SocialUpdates";
+import { useEffect, useState } from 'react';
 
 const drawerWidth = '30%';
-export default function SocialPage() {
 
-  // const [data, setData] = useState('');
-  //
-  // useEffect(() => {
-  //   fetch(`http://${config.server_host}:${config.server_port}/following/${username}`)
-  //       .then(res => res.json())
-  //       .then(resJson => {
-  //         const following_data = resJson.map((user) => ({username: user.following, genres: user.genre_pref_1.concat(' ', user.genre_pref_2, ' ', user.genre_pref_3)}));
-  //         setData(following_data);
-  //     });
-  // }, [])
+//R.rating, M.imdb_link, M.year, M.imdb_rating, R.comment, R.timestamp
+const config = require('../config.json');
+//const []
+export default function SocialPage({username}) {
+  const [userUpdate,setUserUpdate] = useState([]);
+  const [recUpdate, setRecUpdate] = useState([]);
 
+  const handleAddFollow = (target_id) => {
+    const request = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({'username': username, 'follow_id': target_id})
+    };
+    fetch(`http://${config.server_host}:${config.server_port}/new_follow`, request).then(
+      res => console.log(res.status)
+    )
+  }
+
+
+  useEffect(() => {
+    //hardcoded, need to change Test1 to ${username}
+    fetch(`http://${config.server_host}:${config.server_port}/update/${username}`)
+      .then(res => res.json() )
+      .then(resJson =>{
+        console.log(`http://${config.server_host}:${config.server_port}/update/${username}`);
+        console.log(resJson);
+        const allUpdates = resJson.map((update) => ({id: update.id, ...update}));
+        setUserUpdate(allUpdates);
+    });
+
+    fetch(`http://${config.server_host}:${config.server_port}/rec/${username}`)
+        .then(res => res.json())
+        .then(resJson => {
+          // console.log(`http://${config.server_host}:${config.server_port}/rec/${username}`);
+          // console.log(resJson);
+          const recData = resJson.map((d) => ({username: d.user, genres: (d.genre_pref_1 ?? '').concat(' ', ( d.genre_pref_2 ?? ''), ' ', (d.genre_pref_3 ?? ''))}));
+      setRecUpdate(recData);
+    });
+
+  },[]);
   return (
     <Box sx={{ display: 'flex' }}>
-       <Box
-        component="main"
-        sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3 }}
+      <List>
+        <Toolbar/>
+      {userUpdate.map((updates)=>
+       <ListItem
+        // component="main"
+        // sx={{bgcolor: 'background.default', p: 3, display: 'columns'}}
       >
-         <Toolbar/>
-        <SocialUpdates></SocialUpdates>
-      </Box>
+
+        <SocialUpdates username={updates.username} timestamp={updates.timestamp} comment={updates.comment}
+                       rating={updates.rating} title={updates.title} year={updates.year} id={updates.id}></SocialUpdates>
+       </ListItem>)}
+      </List>
       <Drawer
         sx={{
           width: drawerWidth,
@@ -52,23 +85,22 @@ export default function SocialPage() {
           Recommend to follow
         </Typography>
         <List>
+          {recUpdate.map((user)=>
           <ListItem
-            secondaryAction={
-              <IconButton edge="end" aria-label="delete">
-                <AddCircleIcon />
-              </IconButton>
-            }
           >
             <ListItemAvatar>
-              <Avatar>
-                <AccountCircleIcon />
+              <Avatar sx={{ bgcolor: '#bf360c' }} >
+                {user.username[0]}
               </Avatar>
             </ListItemAvatar>
             <ListItemText
-              primary="Username"
-              secondary="genre preferences"
+              primary={user.username}
+              secondary={user.genres}
             />
-          </ListItem>
+            <IconButton edge="end" onClick={() => {handleAddFollow(user.username)}}>
+                <AddCircleIcon />
+            </IconButton>
+          </ListItem>)}
         </List>
       </Drawer>
       {/*<Grid container alignItems="center" justifyContent="center" spacing={3} sx={{ mx:'auto', mt:5 }}>*/}
@@ -76,4 +108,5 @@ export default function SocialPage() {
       {/*</Grid>*/}
     </Box>
   );
-}
+
+};

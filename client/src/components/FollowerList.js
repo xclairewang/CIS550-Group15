@@ -42,30 +42,51 @@ export default function FollowList({ username }) {
   const [data, setData] = useState([]);
 
   useEffect(() => {
-      fetch(`http://${config.server_host}:${config.server_port}/following/${username}`)
+      fetch(`http://${config.server_host}:${config.server_port}/follower/${username}`)
         .then(res => res.json())
         .then(resJson => {
-          // console.log(`http://${config.server_host}:${config.server_port}/following/${username}`);
-          // const following_data = resJson.map((user) => ({following: user.following, ...user}));
           setData(resJson);
-
       });
   }, [])
 
+  const addFollow = (target_id) => {
+    const request = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({'username': username, 'follow_id': target_id})
+    };
+    fetch(`http://${config.server_host}:${config.server_port}/new_follow`, request);
+  }
+
+  const deleteFollow = (target_id) => {
+    const request = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({'username': username, 'follow_id': target_id})
+    };
+    fetch(`http://${config.server_host}:${config.server_port}/delete_follow`, request);
+  }
+
     return(
       <Container>
-        <Box sx={{ ...style, width: 500, height: '80%', overflowY: "scroll"}}>
-          <h2>Following</h2>
+        {/*<Alert severity="success">This is a success alert — check it out!</Alert>*/}
+        <Box sx={{ ...style, width: 500, height: '80%' }}>
+          <h2>Followers</h2>
           <List>
           { Object.keys(data).length !== 0 && data.map((person) =>
-              <ListItem>
+              <ListItem
+                secondaryAction={
+                  <IconButton edge="end" aria-label="add" onClick={() => {addFollow(person.follower)}}>
+                    { person.user_could_follow === 1 && <AddCircleIcon /> }
+                  </IconButton>}
+              >
               <ListItemAvatar>
                 <Avatar sx={{ bgcolor: '#bf360c' }} >
-                  {person.following[0]}
+                  {person.follower[0]}
                 </Avatar>
               </ListItemAvatar>
               <ListItemText
-                primary={person.following}
+                primary={person.follower}
                 secondary={(person.genre_pref_1 ?? '').concat(' ', ( person.genre_pref_2 ?? ''), ' ', (person.genre_pref_3 ?? ''))}
               />
             </ListItem>
@@ -75,5 +96,6 @@ export default function FollowList({ username }) {
        </Box>
       </Container>
     );
+
 };
 

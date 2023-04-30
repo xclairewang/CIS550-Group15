@@ -24,11 +24,12 @@ app.get('/following/:user_id', routes.following);
 app.get('/register_rate', routes.register_rate);
 app.get('/search/:user_id', routes.search);
 app.get('/update/:user_id', routes.update);
-app.get('/top_movie/:user_id', routes.top_movies);
+app.get('/top_movies/:user_id', routes.top_movies);
 app.get('/two_degree/:user_id', routes.two_degree);
-app.get('/top_genre/:user_id',routes.top_genre);
+app.get('/userinfo/:user_id',routes.userinfo);
 app.get('/rec/:user_id',routes.rec);
-app.get('/login', routes.login)
+app.get('/login', routes.login);
+app.get('/logout/:user_id',routes.logout);
 
 app.post('/create_views/:user_id',routes.create_views);
 app.post('/register', routes.register);

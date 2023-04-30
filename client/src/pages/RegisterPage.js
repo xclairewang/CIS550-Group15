@@ -1,10 +1,8 @@
 import {
   Avatar,
   Box,
-  Button, Checkbox,
+  Button,
   Container,
-  CssBaseline,
-  FormControlLabel,
   Grid, Link,
   TextField,
   Typography
@@ -12,21 +10,24 @@ import {
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import {useState} from "react";
 import FormControl from '@mui/material/FormControl';
 import Chip from '@mui/material/Chip';
 import OutlinedInput from '@mui/material/OutlinedInput';
-import ToggleButton from "@mui/material/ToggleButton";
 import RatingCard from "../components/RatingCard";
+import { useEffect, useState } from 'react';
+import Stack from "@mui/material/Stack";
+import Alert from "@mui/material/Alert";
+const config = require('../config.json');
 
-//TODO: set max genres to 3; implement ratings
-export default function RegisterPage(props) {
+export default function RegisterPage({onFormSwitch, onLoggedIn}) {
   const allGenres = ['Documentary', 'Short', 'Animation', 'Comedy', 'Romance', 'Sport',
        'News', 'Drama', 'Fantasy', 'Horror', 'Biography', 'Music', 'War', 'Crime',
        'Western', 'Family', 'Adventure', 'Action', 'History', 'Mystery', 'Sci-Fi',
        'Musical', 'Thriller', 'Film-Noir', 'Game-Show', 'Talk-Show', 'Reality-TV', 'Adult']
   const [genre, setGenre] = useState([])
   const [frame, setFrame] = useState(0)
+  const [errorMsg, setErrorMsg] = useState('');
+
   const handleGenre = (event) => {
     const {
       target: { value },
@@ -39,30 +40,41 @@ export default function RegisterPage(props) {
   const handleRegister = (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+
+    const username = data.get('email');
+    const password = data.get('password');
+
+    event.preventDefault();
+
+    if (username === "" | password === "") {
+      setErrorMsg("Incorrect username or password!");
+    }
+
+    if (genre.length > 3) {
+      setErrorMsg("Please select at most 3 genres!");
+    }
+
+    const requestOptions = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({'username': username, "password":password, 'genre_pref_1':genre[0], 'genre_pref_2':genre[1], 'genre_pref_3':genre[2] })
+    };
+    var stat = 0;
+    fetch(`http://${config.server_host}:${config.server_port}/register`, requestOptions)
+      .then(res => {
+        stat = res.status;
+        res.json().then(resJson => {
+          const message = resJson.statusMessage;
+          if (stat != 200) {
+            // setErrorMsg(message);
+
+          } else {
+            onLoggedIn(username);
+          }
+        });
+      });
   };
 
-  // POST info use json body
-
-  // const register = () => {
-  //
-  //   fetch(`http://${config.server_host}:${config.server_port}/login?username=${username}&password=${password}`)
-  //     .then(res => res.json())
-  //     .then(resJson => {
-  //       setLoginResult(resJson);
-  //     });
-  //
-  //   if (loginResult.length == 0 ) {
-  //     setErrorMsg("Incorrect username or password!");
-  //   } else if (sha256(password) != loginResult.password) {
-  //     setErrorMsg("Incorrect username or password!");
-  //   } else {
-  //     props.onLoggedIn('username');
-  //   }
-  // };
   if (frame === 0) {
     return (
       <Container component="main" maxWidth="xs">
@@ -74,6 +86,9 @@ export default function RegisterPage(props) {
             alignItems: 'center',
           }}
         >
+          { errorMsg && (<Stack sx={{ width: '100%', margin:3}}>
+            <Alert severity="error">{errorMsg}</Alert>
+          </Stack>)}
           <Avatar sx={{ m: 1, color: 'secondary.main' }}>
             {/*<LockOutlinedIcon />*/}
           </Avatar>
@@ -131,18 +146,13 @@ export default function RegisterPage(props) {
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
-              onClick={() => setFrame(1)}
+              // onClick={() => setFrame(1)}
             >
               Submit
             </Button>
             <Grid container>
-              {/*<Grid item xs>*/}
-              {/*  <Link href="#" variant="body2">*/}
-              {/*    Forgot password?*/}
-              {/*  </Link>*/}
-              {/*</Grid>*/}
               <Grid item>
-                <Link variant="body2" onClick={() => props.onFormSwitch('login')}>
+                <Link variant="body2" onClick={() => onFormSwitch('login')}>
                   {"Already have an account? Sign in"}
                 </Link>
               </Grid>
