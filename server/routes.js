@@ -40,7 +40,7 @@ const movie = async function(req, res) {
   const movie_id = req.params.movie_id
 
   connection.query (
-    `SELECT M.id, M.imdb_link, M.title, M.imdb_rating, M.year,
+    `SELECT M.id, M.imdb_link, M.imdb_rating,
       (CASE WHEN R.username = '${user_id}' THEN 1 ELSE 0 END) AS watched
     FROM Movies M JOIN MovieRatings R ON M.id = R.movie_id
     WHERE id = '${movie_id}'
@@ -61,16 +61,16 @@ const movie = async function(req, res) {
 
 // Route 2: GET /register_rate
 const register_rate = async function(req, res) {
-  const pageSize = req.query.page_size ?? 10;
 
-  const genre1 = req.params.genre1
-  const genre2 = req.params.genre2
-  const genre3 = req.params.genre3
+  const genre1 = '%' + req.query.genre1 + '%'?? '';
+  const genre2 = '%' + req.query.genre2 + '%' ?? '';
+  const genre3 = '%' + req.query.genre3 + '%' ?? '';
+  console.log(genre1)
   
   connection.query (
     `SELECT *
-    FROM MostRated
-    WHERE genres LIKE '%${genre1}%' OR genres LIKE '%${genre2}%' OR genres LIKE '%${genre3}%' ` 
+    FROM MostRatedMovies
+    WHERE genres LIKE '${genre1}' OR genres LIKE '${genre2}' OR genres LIKE '${genre3}'` 
     
     //add back offset once connected with frontend
     //LIMIT ${pageSize} OFFSET ${(page-1) * pageSize}
@@ -125,14 +125,17 @@ const search = async function(req, res) {
     connection.query (
       `With AM as (
         SELECT distinct id, imdb_link, title, imdb_rating, year
-        FROM Movies M JOIN MovieRatings MR ON M.id = MR.movie_id
-        WHERE MR.username in (SELECT following FROM Following_${user_id})
+        FROM Movies M 
+          JOIN MovieRatings MR ON M.id = MR.movie_id
+        WHERE MR.username 
+          in (SELECT following FROM Following_${user_id})
           AND M.title LIKE '%${title}%'
             AND year <= ${yearHigh}
             AND year >= ${yearLow}
         GROUP BY id
       )
-      SELECT id, imdb_link, title, imdb_rating, year, GROUP_CONCAT(genre, '') AS genres
+      SELECT id, imdb_link, title, imdb_rating, year, 
+        GROUP_CONCAT(genre, '') AS genres
       FROM AM JOIN MovieGenres MG ON AM.id = MG.movie_id
       GROUP BY id
       HAVING genres LIKE '%${genre}%'
@@ -183,7 +186,7 @@ const update = async function(req, res) {
   const pageSize = req.query.page_size ?? 10;
 
   connection.query(
-    `SELECT R.username, M.title, R.rating, M.imdb_link, R.comment
+    `SELECT R.username, M.title, R.rating, M.imdb_link, M.year, M.imdb_rating, R.comment, R.timestamp
     FROM Following F
     JOIN MovieRatings R ON F.following = R.username
     JOIN Movies M on R.movie_id = M.id
@@ -202,13 +205,33 @@ const update = async function(req, res) {
 }
 
 
-// Route 6: GET /follower/:user_id
+// Route 6: GET /following/:user_id
 // need to update considering view
+const following = async function(req, res) {
+  connection.query(`
+  SELECT following, genre_pref_1, genre_pref_2, genre_pref_3
+  FROM Following JOIN Users U on Following.following = U.username
+  WHERE user = '${req.params.user_id}'`, (err, data) => {
+    if (err || data.length === 0) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data);
+    }
+  });
+}
+
+//Route 6.1: GET/following/:user_id
 const follower = async function(req, res) {
   connection.query(`
-    SELECT follower
-    FROM Follower
-    WHERE user = '${req.params.username}'`, (err, data) => {
+    WITH UserFollower AS (
+      SELECT Follower.follower as follower, genre_pref_1, genre_pref_2, genre_pref_3
+      FROM Follower JOIN Users ON Follower.user = Users.username
+      WHERE user = '${req.params.user_id}'
+    )
+    SELECT distinct UF.follower as follower, genre_pref_1, genre_pref_2, genre_pref_3,
+       (CASE WHEN UF.follower in (SELECT following FROM Following WHERE user = '${req.params.user_id}') THEN 1 ELSE 0 END) AS watched
+    FROM UserFollower UF JOIN Follower F ON UF.follower = F.user`, (err, data) => {
     if (err || data.length === 0) {
       console.log(err);
       res.json({});
@@ -264,7 +287,9 @@ const two_degree = async function(req, res) {
       AND F3.following NOT IN (
     SELECT following 
     FROM D0
-    ) )`, (err, data) => {
+    ) )`
+    
+    , (err, data) => {
       if (err || data.length === 0) {
         console.log(err);
         res.json({});
@@ -297,6 +322,8 @@ const top_genre = async function(req, res){
 }
 
 //Route 9.1: POST /create_views/:user_id
+// need genre preference, whether we are following this follower or not
+// following get genre preference
 //need to be tested
 const create_views = async function(req, res){
   const currUser = req.body.user_id 
@@ -371,10 +398,12 @@ const create_views = async function(req, res){
     LEFT JOIN RatedByUser RU ON AM.movie_id = RU.id);
     
     CREATE VIEW Following_${currUser} AS (
-      SELECT following
-      FROM Following
+      SELECT following, genre_pref_1, genre_pref_2, genre_pref_3
+      FROM Following JOIN Users U on Following.following = U.username
       WHERE user = '${currUser}'
     );
+
+
     
     `, (err, data) =>{
       if (err) {
@@ -388,17 +417,17 @@ const create_views = async function(req, res){
 }
 
 //Route 9: GET /rec/:user_id
+//get user's username genre preference
 //tested
 const rec = async function(req, res){
-  const currUser = req.params.username
+  const currUser = req.params.user_id
 
   connection.query(
     `WITH DotProduct AS (
       SELECT T2_${currUser}.username as user,
       SUM(T1_${currUser}.rating * T2_${currUser}.rating) / (SQRT(SUM(T1_${currUser}.rating * T1_${currUser}.rating)) * SQRT(SUM(T2_${currUser}.rating * T2_${currUser}.rating))) as Dot_Product
       FROM T1_${currUser} JOIN T2_${currUser} ON T1_${currUser}.movie_id = T2_${currUser}.id
-      GROUP BY T2_${currUser}.username
-    )
+      GROUP BY T2_${currUser}.username )
     SELECT user
     FROM DotProduct
     ORDER BY Dot_Product DESC
@@ -542,6 +571,7 @@ module.exports = {
   trending,
   movie,
   follower,
+  following,
   register_rate,
   search,
   update,

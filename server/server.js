@@ -20,6 +20,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.get('/trending/:user_id', routes.trending);
 app.get('/movie/:user_id/:movie_id', routes.movie)
 app.get('/follower/:user_id', routes.follower);
+app.get('/following/:user_id', routes.following);
 app.get('/register_rate', routes.register_rate);
 app.get('/search/:user_id', routes.search);
 app.get('/update/:user_id', routes.update);
