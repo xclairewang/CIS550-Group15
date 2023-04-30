@@ -36,8 +36,8 @@ export default function ProfilePage() {
       <Toolbar />
       <Grid container spacing={3} alignItems="center" justifyContent="start"  sx={{ width:'70%', mx:'auto' }}>
         <Grid item xs={3}>
-          <Avatar sx={{ m: 6, width: 120, height: 120 }}>
-            H
+          <Avatar sx={{ m: 6, width: 120, height: 120, bgcolor: '#bf360c'}}>
+            R
           </Avatar>
         </Grid>
         <Grid item xs={5}>

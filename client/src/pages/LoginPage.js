@@ -65,6 +65,14 @@ export default function LoginPage(props) {
 
   };
 
+  const handleViewCreation = () => {
+    const requestOptions = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'React POST Request Example' })
+    };
+  }
+
 
   // Function to check username and password, and turn to homepage if match success
   const login = () => {

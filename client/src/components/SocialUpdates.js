@@ -15,7 +15,7 @@ export default function SocialUpdates() {
         <Grid item xs={9}>
           <CardHeader
             avatar={
-              <Avatar sx={{ bgcolor: 'primary' }} >
+              <Avatar sx={{ bgcolor: '#bf360c' }} >
                 R
               </Avatar>
             }

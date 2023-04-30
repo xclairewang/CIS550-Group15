@@ -48,8 +48,8 @@ export default function FollowList() {
             }
           >
             <ListItemAvatar>
-              <Avatar>
-                <AccountCircleIcon />
+              <Avatar sx={{ bgcolor: '#bf360c' }} >
+                R
               </Avatar>
             </ListItemAvatar>
             <ListItemText
