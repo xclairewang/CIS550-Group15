@@ -17,6 +17,18 @@ import SocialUpdates from "../components/SocialUpdates";
 
 const drawerWidth = '30%';
 export default function SocialPage() {
+
+  // const [data, setData] = useState('');
+  //
+  // useEffect(() => {
+  //   fetch(`http://${config.server_host}:${config.server_port}/following/${username}`)
+  //       .then(res => res.json())
+  //       .then(resJson => {
+  //         const following_data = resJson.map((user) => ({username: user.following, genres: user.genre_pref_1.concat(' ', user.genre_pref_2, ' ', user.genre_pref_3)}));
+  //         setData(following_data);
+  //     });
+  // }, [])
+
   return (
     <Box sx={{ display: 'flex' }}>
        <Box

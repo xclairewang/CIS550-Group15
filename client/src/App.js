@@ -45,6 +45,13 @@ export default function App() {
   const toggleStatus = (userName) => {
     setCurrentUser(userName)
   }
+
+  const handleLogout = () => {
+    setCurrentForm('login')
+    setCurrentUser('')
+    console.log("logged out")
+  }
+
   if (currentUser === '') {
     return (
       <ThemeProvider theme={theme}>
@@ -62,10 +69,10 @@ export default function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <BrowserRouter>
-          <NavBar loggedIn={true} username={currentUser}/>
+          <NavBar loggedIn={true} username={currentUser} handleLogout={handleLogout} />
           <Routes>
             <Route path="/" element={<HomePage username={currentUser}/>} />
-            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile" element={<ProfilePage username={currentUser}/>} />
             <Route path="/socials" element={<SocialPage />} />
             {/*<Route path="/albums" element={<AlbumsPage />} />*/}
             {/*<Route path="/albums/:album_id" element={<AlbumInfoPage />} />*/}
