@@ -2,9 +2,7 @@ const mysql = require('mysql')
 const config = require('./config.json')
 const moment = require('moment')
 
-/******************
- * IN USE *
- ******************/
+
 
 const connection = mysql.createConnection({
   host: config.rds_host,
@@ -16,6 +14,9 @@ const connection = mysql.createConnection({
 });
 connection.connect((err) => err && console.log(err));
 
+/******************
+ * GET Routes *
+ ******************/
 
 // Route 1: GET /trending/:user_id
 const trending = async function(req, res) {
@@ -36,7 +37,7 @@ const trending = async function(req, res) {
   });
 }
 
-// Route 1: GET /movie/:user_id/:movie_id
+// Route 2: GET /movie/:user_id/:movie_id
 const movie = async function(req, res) {
   const user_id = req.params.user_id
   const movie_id = req.params.movie_id
@@ -59,7 +60,7 @@ const movie = async function(req, res) {
   )
 }
 
-// Route 2: GET /register_rate
+// Route 3: GET /register_rate
 const register_rate = async function(req, res) {
 
   const genre1 = '%' + req.query.genre1 + '%'?? '';
@@ -86,7 +87,7 @@ const register_rate = async function(req, res) {
   });
 }
 
-// Route 3: GET /search/:user_id
+// Route 4: GET /search/:user_id
 const search = async function(req, res) {
   const user_id = req.params.user_id
   const title = req.query.title ?? '';
@@ -157,7 +158,7 @@ const search = async function(req, res) {
 
 }
 
-// Route 4: GET /login
+// Route 5: GET /login
 //not tested yet
 const login = async function(req, res) {
   const username = req.query.username;
@@ -180,7 +181,7 @@ const login = async function(req, res) {
   )
 }
 
-// Route 5: GET /update/:user_id
+// Route 6: GET /update/:user_id
 const update = async function(req, res) {
   const page = req.query.page;
   const pageSize = req.query.page_size ?? 10;
@@ -208,7 +209,7 @@ const update = async function(req, res) {
 }
 
 
-// Route 6: GET /following/:user_id
+// Route 7: GET /following/:user_id
 // need to update considering view
 const following = async function(req, res) {
   connection.query(`
@@ -224,7 +225,7 @@ const following = async function(req, res) {
   });
 }
 
-//Route 6.1: GET/follower/:user_id
+//Route 8: GET/follower/:user_id
 const follower = async function(req, res) {
   connection.query(`
   WITH UserFollower AS (
@@ -244,7 +245,7 @@ const follower = async function(req, res) {
   });
 }
 
-// Route 7: GET/top_movies/:user_id
+// Route 9: GET/top_movies/:user_id
 const top_movies =async function(req, res) {
   connection.query(
     `SELECT M.id, M.title, M.imdb_link, R.rating
@@ -262,8 +263,32 @@ const top_movies =async function(req, res) {
     }
   })
 }
-
-// Route 8: GET /two_degree/:user_id
+// Route 10: GET /userinfo/:user_id
+const userinfo = async function(req, res){
+  connection.query(
+    `WITH FollowingCounter AS (
+      SELECT user, COUNT(following) as followingCount
+      FROM Following
+      WHERE user = '${req.params.user_id}'
+    ),
+    FollowerCounter As (
+      SELECT user, COUNT(follower) as followerCount
+      FROM Follower
+      WHERE user = '${req.params.user_id}'
+    )
+    SELECT followingCount, followerCount, genre_pref_1, genre_pref_2, genre_pref_3
+    FROM FollowingCounter LEFT JOIN FollowerCounter ON FollowingCounter.user = FollowerCounter.user
+      JOIN Users ON FollowingCounter.user = Users.username
+    WHERE Users.username = '${req.params.user_id}'`, (err, data) => {
+      if (err || data === null ||data.length === 0) {
+        console.log(err);
+        res.json({});
+      } else {
+        res.json(data);
+      }
+    });
+}
+// Route 11: GET /two_degree/:user_id
 const two_degree = async function(req, res) {
   const currUser= req.params.user_id
 
@@ -304,36 +329,58 @@ const two_degree = async function(req, res) {
 }
 
 
-// Route 10: GET /userinfo/:user_id
-const userinfo = async function(req, res){
+
+//Route 12: GET /rec/:user_id
+//get user's username genre preference
+//tested
+const rec = async function(req, res){
+  const currUser = req.params.user_id
+
   connection.query(
-    `WITH FollowingCounter AS (
-      SELECT user, COUNT(following) as followingCount
-      FROM Following
-      WHERE user = '${req.params.user_id}'
-    ),
-    FollowerCounter As (
-      SELECT user, COUNT(follower) as followerCount
-      FROM Follower
-      WHERE user = '${req.params.user_id}'
-    )
-    SELECT followingCount, followerCount, genre_pref_1, genre_pref_2, genre_pref_3
-    FROM FollowingCounter LEFT JOIN FollowerCounter ON FollowingCounter.user = FollowerCounter.user
-      JOIN Users ON FollowingCounter.user = Users.username
-    WHERE Users.username = '${req.params.user_id}'`, (err, data) => {
-      if (err || data === null ||data.length === 0) {
+    `WITH DotProduct AS (
+      SELECT T2_${currUser}.username as user,
+      SUM(T1_${currUser}.rating * T2_${currUser}.rating) / (SQRT(SUM(T1_${currUser}.rating * T1_${currUser}.rating)) * SQRT(SUM(T2_${currUser}.rating * T2_${currUser}.rating))) as Dot_Product
+      FROM T1_${currUser} JOIN T2_${currUser} ON T1_${currUser}.movie_id = T2_${currUser}.id
+      GROUP BY T2_${currUser}.username )
+    SELECT user, genre_pref_1, genre_pref_2, genre_pref_3
+    FROM DotProduct DP JOIN Users U on DP.user = U.username
+    ORDER BY Dot_Product DESC
+    LIMIT 10`, (err, data) => {
+      if (err || data === null || data.length === 0) {
+        console.log(err);
+        res.json([]);
+      } else {
+        res.json(data);
+      }
+    } 
+  )
+} 
+
+// Route 13: GET /logout/:username
+const logout = async function(req,res){
+  const user_id = req.params.user_id;
+  connection.query(
+    `DROP VIEW T1_${user_id}, T2_${user_id}, TwoDegree_${user_id}, Following_${user_id};
+    `, (err, data) => {
+      if (err || data.length === 0) {
+>>>>>>> Stashed changes
         console.log(err);
         res.json({});
       } else {
         res.json(data);
       }
-    });
+    } 
+  )
 }
 
-//Route 9.1: POST /create_views/:user_id
+/******************
+ * POST Routes *
+ ******************/
+
+
+//Route 14: POST /create_views/:user_id
 // need genre preference, whether we are following this follower or not
 // following get genre preference
-//need to be tested
 const create_views = async function(req, res){
   const currUser = req.body.user_id
 
@@ -425,49 +472,7 @@ const create_views = async function(req, res){
   )
 }
 
-//Route 9: GET /rec/:user_id
-//get user's username genre preference
-//tested
-const rec = async function(req, res){
-  const currUser = req.params.user_id
-
-  connection.query(
-    `WITH DotProduct AS (
-      SELECT T2_${currUser}.username as user,
-      SUM(T1_${currUser}.rating * T2_${currUser}.rating) / (SQRT(SUM(T1_${currUser}.rating * T1_${currUser}.rating)) * SQRT(SUM(T2_${currUser}.rating * T2_${currUser}.rating))) as Dot_Product
-      FROM T1_${currUser} JOIN T2_${currUser} ON T1_${currUser}.movie_id = T2_${currUser}.id
-      GROUP BY T2_${currUser}.username )
-    SELECT user, genre_pref_1, genre_pref_2, genre_pref_3
-    FROM DotProduct DP JOIN Users U on DP.user = U.username
-    ORDER BY Dot_Product DESC
-    LIMIT 10`, (err, data) => {
-      if (err || data === null || data.length === 0) {
-        console.log(err);
-        res.json([]);
-      } else {
-        res.json(data);
-      }
-    }
-  )
-}
-
-// Route 20: GET /logout/:username
-const logout = async function(req,res){
-  const user_id = req.params.user_id;
-  connection.query(
-    `DROP VIEW T1_${user_id}, T2_${user_id}, TwoDegree_${user_id}, Following_${user_id};
-    `, (err, data) => {
-      if (err || data.length === 0) {
-        console.log(err);
-        res.json({});
-      } else {
-        res.json(data);
-      }
-    }
-  )
-}
-// Route 11: POST /register
-// not tested
+// Route 15: POST /register
 const register = async function(req,res){
   const username = req.body.username;
   const password = req.body.password;
@@ -500,7 +505,7 @@ const register = async function(req,res){
     });
 }
 
-//Route 12: POST /rate_movie/:movie_id
+//Route 16: POST /rate_movie/:movie_id
 const rate_movie = async function(req,res){
   const username = req.body.username;
   const movie_id = req.params.movie_id;
@@ -522,7 +527,7 @@ const rate_movie = async function(req,res){
     });
 }
 
-//Route 13: POST /delete_rating/:movie_id
+//Route 17: POST /delete_rating/:movie_id
 const delete_rating = async function(req,res){
   const currusr = req.body.username;
   const movieid = req.params.movie_id;
@@ -538,7 +543,7 @@ const delete_rating = async function(req,res){
     });
 }
 
-//Route 14: POST /new_follow
+//Route 18: POST /new_follow
 const new_follow = async function(req,res){
   const currusr = req.body.username;
   const followid = req.body.follow_id;
@@ -565,7 +570,7 @@ const new_follow = async function(req,res){
     });
 }
 
-//Route 15: POST /delete_follow
+//Route 19: POST /delete_follow
 const delete_follow = async function(req,res) {
   const currusr = req.body.username;
   const followid = req.body.follow_id;

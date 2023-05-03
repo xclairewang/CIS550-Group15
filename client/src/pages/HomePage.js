@@ -69,6 +69,8 @@ export default function HomePage(username) {
 
   // Search function for movies
   const search = () => {
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
     var watched = 0;
     if (watchedByFriend) { watched = 1}
     fetch(`http://${config.server_host}:${config.server_port}/search/${username.username}?title=${searchText}&genre=${genre}&yearLow=${year[0]}&yearHigh=${year[1]}&watchedByFriends=${watched}`)
@@ -84,6 +86,19 @@ export default function HomePage(username) {
         // // setTrendingMovies(searchedData);
         // console.log("trending movies: " + trendingMovies);
 
+=======
+=======
+>>>>>>> Stashed changes
+    fetch(`http://${config.server_host}:${config.server_port}/search?title=${searchText}
+      &genre=${genre}&yearLow=${year[0]}&yearHigh=${year[1]}&watchedByFriends=${watchedByFriend}`)
+      .then(res => res.json())
+      .then(resJson => {
+        const searchedData = resJson.map((movie) => ({id: movie.id, ...movie}));
+        setTrendingMovies(searchedData);
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
       });
   }
 
