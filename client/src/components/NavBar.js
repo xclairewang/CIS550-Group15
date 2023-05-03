@@ -75,6 +75,7 @@ export default function NavBar(props) {
                   color: 'inherit',
                   textDecoration: 'none',
                 }}
+
               >
                 Socials
               </NavLink>
@@ -112,6 +113,7 @@ export default function NavBar(props) {
                       color: 'inherit',
                       textDecoration: 'none',
                     }}
+
                   >
                     Profile
                   </NavLink>
