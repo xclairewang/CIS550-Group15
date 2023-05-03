@@ -72,9 +72,6 @@ const register_rate = async function(req, res) {
     `SELECT *
     FROM MostRatedMovies
     WHERE genres LIKE '${genre1}' OR genres LIKE '${genre2}' OR genres LIKE '${genre3}'`
-
-    //add back offset once connected with frontend
-    //LIMIT ${pageSize} OFFSET ${(page-1) * pageSize}
   , (err, data) => {
     if (err || data.length === 0) {
       // if there is an error for some reason, or if the query is empty (this should not be possible)
@@ -108,9 +105,6 @@ const search = async function(req, res) {
       GROUP BY id
       HAVING genres LIKE '%${genre}%'
       LIMIT 10`
-
-      //add back offset once connected with frontend
-      //LIMIT ${pageSize} OFFSET ${(page-1) * pageSize}
     , (err, data) => {
       if (err || data.length === 0) {
         // if there is an error for some reason, or if the query is empty (this should not be possible)
@@ -141,9 +135,6 @@ const search = async function(req, res) {
       GROUP BY id
       HAVING genres LIKE '%${genre}%'
       LIMIT 10`
-
-      //add back offset once connected with frontends
-      //LIMIT ${pageSize} OFFSET ${(page-1) * pageSize}
     , (err, data) => {
       if (err || data.length === 0) {
         // if there is an error for some reason, or if the query is empty (this should not be possible)
@@ -159,7 +150,6 @@ const search = async function(req, res) {
 }
 
 // Route 5: GET /login
-//not tested yet
 const login = async function(req, res) {
   const username = req.query.username;
   const password = req.query.password;
@@ -183,7 +173,6 @@ const login = async function(req, res) {
 
 // Route 6: GET /update/:user_id
 const update = async function(req, res) {
-  const page = req.query.page;
   const pageSize = req.query.page_size ?? 10;
 
   connection.query(
@@ -210,7 +199,6 @@ const update = async function(req, res) {
 
 
 // Route 7: GET /following/:user_id
-// need to update considering view
 const following = async function(req, res) {
   connection.query(`
   SELECT following, genre_pref_1, genre_pref_2, genre_pref_3
@@ -331,11 +319,8 @@ const two_degree = async function(req, res) {
 
 
 //Route 12: GET /rec/:user_id
-//get user's username genre preference
-//tested
 const rec = async function(req, res){
-  const currUser = req.params.user_id
-
+  const currUser = req.params.user_id;
   connection.query(
     `WITH DotProduct AS (
       SELECT T2_${currUser}.username as user,
@@ -363,7 +348,6 @@ const logout = async function(req,res){
     `DROP VIEW T1_${user_id}, T2_${user_id}, TwoDegree_${user_id}, Following_${user_id};
     `, (err, data) => {
       if (err || data.length === 0) {
->>>>>>> Stashed changes
         console.log(err);
         res.json({});
       } else {
@@ -379,8 +363,6 @@ const logout = async function(req,res){
 
 
 //Route 14: POST /create_views/:user_id
-// need genre preference, whether we are following this follower or not
-// following get genre preference
 const create_views = async function(req, res){
   const currUser = req.body.user_id
 
@@ -457,11 +439,9 @@ const create_views = async function(req, res){
       SELECT following, genre_pref_1, genre_pref_2, genre_pref_3
       FROM Following JOIN Users U on Following.following = U.username
       WHERE user = '${currUser}'
-    );
-
-
+    );`
     
-    `, (err, data) =>{
+    , (err, data) =>{
       if (err) {
         console.log(err);
         res.status(400).send(`Views cannot be added to the database. Please try again`);
